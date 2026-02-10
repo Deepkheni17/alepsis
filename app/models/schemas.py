@@ -59,3 +59,52 @@ class ErrorResponse(BaseModel):
     error_type: str = Field(..., description="Error type identifier")
     message: str = Field(..., description="Human-readable error message")
     details: Optional[dict] = Field(None, description="Additional error details")
+
+
+# ============================================================================
+# Response schemas for GET endpoints
+# ============================================================================
+
+class InvoiceListItem(BaseModel):
+    """
+    Minimal invoice data for list view.
+    """
+    id: int
+    vendor_name: Optional[str]
+    invoice_number: Optional[str]
+    invoice_date: Optional[str]
+    total_amount: Optional[float]
+    currency: Optional[str]
+    is_valid: bool
+    created_at: str  # ISO 8601 format
+    
+    class Config:
+        from_attributes = True
+
+
+class InvoiceListResponse(BaseModel):
+    """
+    Response for GET /invoices endpoint.
+    """
+    count: int = Field(..., description="Total number of invoices")
+    invoices: List[InvoiceListItem] = Field(..., description="List of invoices")
+
+
+class InvoiceDetail(BaseModel):
+    """
+    Complete invoice data for detail view.
+    """
+    id: int
+    vendor_name: Optional[str]
+    invoice_number: Optional[str]
+    invoice_date: Optional[str]
+    subtotal: Optional[float]
+    tax: Optional[float]
+    total_amount: Optional[float]
+    currency: Optional[str]
+    is_valid: bool
+    validation_errors: List[str] = Field(default_factory=list)
+    created_at: str  # ISO 8601 format
+    
+    class Config:
+        from_attributes = True

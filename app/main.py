@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes import router
+from app.database import init_db
 
 # Configure logging
 logging.basicConfig(
@@ -41,6 +42,14 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Starting AI Invoice Processing Backend...")
+    
+    # Initialize database tables
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {str(e)}", exc_info=True)
+    
     logger.info("Application ready to accept requests")
     
     yield
