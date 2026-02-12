@@ -1,6 +1,6 @@
-# AI Invoice Processing Backend (MVP)
+# Invoice Processing System
 
-Production-ready backend that converts invoice PDFs/images into structured JSON data using AI.
+Complete AI-powered invoice processing system with FastAPI backend and Next.js frontend.
 
 ## Business Problem
 
@@ -11,183 +11,178 @@ Businesses receive invoices as PDFs or images. Accountants manually read these d
 
 ## Solution
 
-This backend automates invoice data extraction:
-1. Accept invoice PDFs/images via API
-2. Extract text using OCR (mocked in MVP)
-3. Extract structured data using AI (pattern-based in MVP, LLM-ready)
-4. Validate extracted data
-5. Return clean, predictable JSON
+Full-stack application that automates the entire invoice workflow:
+1. **Upload** - Accept invoice PDFs/images via web UI or API
+2. **Extract** - OCR + AI extracts structured data
+3. **Validate** - Automated business rule validation with errors/warnings
+4. **Review** - Web interface for reviewing processed invoices
+5. **Approve** - Workflow for approving validated invoices
+6. **Export** - Download data as CSV or Excel
+
+## Features
+
+### Backend (FastAPI + Python)
+- ✅ OCR-based invoice data extraction
+- ✅ Automated validation with errors and warnings
+- ✅ Status workflow (PENDING → REVIEW_REQUIRED → APPROVED)
+- ✅ SQLite database with SQLAlchemy ORM
+- ✅ Export to CSV/Excel with status filtering
+- ✅ Duplicate invoice detection
+- ✅ RESTful API with interactive documentation
+
+### Frontend (Next.js + TypeScript)
+- ✅ Invoice upload interface with live results
+- ✅ Dashboard with summary statistics
+- ✅ Invoice list table with filtering
+- ✅ Detailed invoice view
+- ✅ One-click approval workflow
+- ✅ Export functionality (CSV/Excel)
+- ✅ Responsive design with Tailwind CSS
 
 ## Tech Stack
 
-- **Language:** Python 3.10+
-- **Framework:** FastAPI
-- **Architecture:** Monolithic backend (web + AI together)
-- **AI:** LLM-ready extraction (currently pattern-based for MVP)
-- **Storage:** In-memory (no database in MVP)
+**Backend**:
+- FastAPI 0.109.0
+- SQLAlchemy 2.0.25
+- Python 3.12.4
+- pandas 2.1.4 (export)
+- openpyxl 3.1.2 (Excel export)
+
+**Frontend**:
+- Next.js 14.2+
+- React 18.2
+- TypeScript 5.3
+- Tailwind CSS 3.4
 
 ## Project Structure
 
 ```
-alepsis/
-├── app/
-│   ├── __init__.py
-│   ├── main.py              # FastAPI application entry point
+e:\alepsis/
+├── app/                          # Backend (FastAPI)
+│   ├── main.py                  # FastAPI app entry point
+│   ├── database.py              # SQLAlchemy configuration
 │   ├── api/
-│   │   ├── __init__.py
-│   │   └── routes.py        # API endpoints
+│   │   └── routes.py           # API endpoints
+│   ├── models/
+│   │   ├── schemas.py          # Pydantic models
+│   │   └── orm_models.py       # SQLAlchemy models
 │   ├── services/
-│   │   ├── __init__.py
-│   │   ├── ocr.py          # OCR service (mocked)
-│   │   └── extraction.py   # AI extraction logic
-│   ├── validation/
-│   │   ├── __init__.py
-│   │   └── validator.py    # Business validation logic
-│   └── models/
-│       ├── __init__.py
-│       └── schemas.py      # Pydantic models
-├── requirements.txt
-└── README.md
+│   │   ├── ocr.py              # OCR processing
+│   │   ├── extraction.py       # Data extraction
+│   │   └── export.py           # CSV/Excel export
+│   └── validation/
+│       └── validator.py        # Business rules
+├── frontend/                     # Frontend (Next.js)
+│   ├── app/
+│   │   ├── page.tsx            # Dashboard
+│   │   ├── layout.tsx          # Root layout
+│   │   ├── upload/             # Upload interface
+│   │   ├── invoices/           # List & detail views
+│   │   ├── components/         # Reusable components
+│   │   └── lib/api.ts          # API client
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── next.config.js          # Next.js configuration
+├── invoices.db                  # SQLite database
+├── requirements.txt             # Python dependencies
+└── TESTING_GUIDE.md            # Detailed testing instructions
 ```
 
-## Installation
+## Quick Start
 
-### Prerequisites
-- Python 3.10 or higher
-- pip
-
-### Setup
-
-1. **Clone or navigate to the project:**
-   ```bash
-   cd e:\alepsis
-   ```
-
-2. **Create virtual environment (recommended):**
-   ```bash
-   python -m venv venv
-   
-   # On Windows:
-   venv\Scripts\activate
-   
-   # On Linux/Mac:
-   source venv/bin/activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Running the Application
-
-### Development Mode
-```bash
-uvicorn app.main:app --reload
+### Easy Start (Recommended)
+Run the included PowerShell script to start both servers:
+```powershell
+.\start-servers.ps1
 ```
 
-The API will be available at: `http://127.0.0.1:8000`
+This will open two terminal windows:
+- Backend on **http://127.0.0.1:8000**
+- Frontend on **http://localhost:3000**
 
-### Production Mode (example)
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+### Manual Start
+
+#### 1. Backend Setup
+
+```powershell
+# Navigate to project root
+cd e:\alepsis
+
+# Activate virtual environment
+.\.venv\Scripts\Activate.ps1
+
+# Install dependencies (if not already installed)
+pip install -r requirements.txt
+
+# Start backend server
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-## API Documentation
+Backend will be available at: **http://127.0.0.1:8000**  
+API Documentation: **http://127.0.0.1:8000/docs**
 
-Once running, access:
-- **Swagger UI:** http://127.0.0.1:8000/docs
-- **ReDoc:** http://127.0.0.1:8000/redoc
+#### 2. Frontend Setup
+
+```powershell
+# Open new terminal
+cd e:\alepsis\frontend
+
+# Install dependencies (if not already installed)
+npm install
+
+# Start development server
+npm run dev
+```
+
+Frontend will be available at: **http://localhost:3000**
+
+## Usage
+
+1. **Upload Invoice**: Go to http://localhost:3000/upload
+2. **View Invoices**: Browse all processed invoices at http://localhost:3000/invoices
+3. **Approve Workflow**: Review and approve invoices from detail view
+4. **Export Data**: Download CSV or Excel from dashboard
 
 ## API Endpoints
 
-### 1. Upload Invoice
-**Endpoint:** `POST /upload-invoice`
+### POST /upload-invoice
+Upload and process an invoice image/PDF.
 
-**Description:** Upload an invoice file (PDF or image) and get structured data.
+**Request**: `multipart/form-data` with `file` field  
+**Response**: Extracted data + validation results + status
 
-**Supported Formats:** PDF, JPG, JPEG, PNG, TIFF
-
-**Request:**
+**Example:**
 ```bash
 curl -X POST "http://127.0.0.1:8000/upload-invoice" \
-  -H "accept: application/json" \
-  -H "Content-Type: multipart/form-data" \
   -F "file=@invoice.pdf"
 ```
 
-**Response (Success):**
-```json
-{
-  "success": true,
-  "extracted_data": {
-    "vendor_name": "ABC Corporation",
-    "invoice_number": "INV-2024-001234",
-    "invoice_date": "2024-01-15",
-    "subtotal": 3000.0,
-    "tax": 255.0,
-    "total_amount": 3255.0,
-    "currency": "USD"
-  },
-  "validation": {
-    "is_valid": true,
-    "errors": [],
-    "warnings": []
-  },
-  "processing_notes": null
-}
-```
+### GET /invoices
+List all invoices with optional pagination.
 
-**Response (With Validation Errors):**
-```json
-{
-  "success": false,
-  "extracted_data": {
-    "vendor_name": "ABC Corporation",
-    "invoice_number": null,
-    "invoice_date": "2024-01-15",
-    "subtotal": 3000.0,
-    "tax": 250.0,
-    "total_amount": 3255.0,
-    "currency": "USD"
-  },
-  "validation": {
-    "is_valid": false,
-    "errors": [
-      {
-        "field": "invoice_number",
-        "message": "Invoice number is missing but required for processing",
-        "severity": "error"
-      },
-      {
-        "field": "total_amount",
-        "message": "Math error: Subtotal (3000.00) + Tax (250.00) = 3250.00, but Total is 3255.00. Difference: 5.00",
-        "severity": "error"
-      }
-    ],
-    "warnings": []
-  },
-  "processing_notes": "Found 2 validation errors"
-}
-```
+**Query Params**: `skip` (default: 0), `limit` (default: 100)  
+**Response**: Array of invoices with summary data
 
-### 2. Health Check
-**Endpoint:** `GET /health`
+### GET /invoices/{id}
+Get detailed invoice information.
 
-**Description:** Check if the API is running.
+**Response**: Full invoice data including validation errors/warnings
 
-**Response:**
-```json
-{
-  "status": "healthy",
-  "service": "AI Invoice Processing Backend",
-  "version": "1.0.0"
-}
-```
+### POST /invoices/{id}/approve
+Approve an invoice (only if status is PENDING).
+
+**Response**: Updated invoice with APPROVED status
+
+### GET /invoices/export
+Export invoices to CSV or Excel.
+
+**Query Params**:
+- `format`: `csv` or `xlsx` (required)
+- `status`: `PENDING`, `REVIEW_REQUIRED`, `APPROVED` (optional)
+
+**Response**: File download
 
 ## Extracted Fields
-
-The AI extraction service extracts the following fields:
 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
@@ -199,105 +194,139 @@ The AI extraction service extracts the following fields:
 | `total_amount` | float | Total amount due | Yes |
 | `currency` | string | Currency code (USD, EUR, etc.) | No |
 
-## Validation Rules
+## Validation Logic
 
-1. **Required Fields:** vendor_name, invoice_number, total_amount must be present
-2. **Mathematical Consistency:** If subtotal and tax are present, they must sum to total_amount (within 1 cent tolerance)
-3. **Data Quality Warnings:** Flags missing dates, unusual amounts, negative values
+### Critical Errors (→ REVIEW_REQUIRED)
+- Missing vendor name
+- Missing invoice number  
+- Missing or negative total amount
+- Duplicate invoice detected
 
-## Testing the API
+### Warnings (→ PENDING)
+- Missing tax amount
+- Missing invoice date
+- Missing currency
 
-### Using cURL:
-```bash
-# Create a test file or use an existing invoice
-curl -X POST "http://127.0.0.1:8000/upload-invoice" \
-  -F "file=@test_invoice.pdf"
+## Status Workflow
+
+```
+UPLOAD → VALIDATION
+            ↓
+    [No Critical Errors] → PENDING → [User Approval] → APPROVED
+            ↓
+    [Has Critical Errors] → REVIEW_REQUIRED (Cannot approve)
 ```
 
-### Using Python:
-```python
-import requests
+## Database
 
-url = "http://127.0.0.1:8000/upload-invoice"
-files = {"file": open("invoice.pdf", "rb")}
+SQLite database located at `e:\alepsis\invoices.db`
 
-response = requests.post(url, files=files)
-print(response.json())
+**Schema**:
+```sql
+CREATE TABLE invoices (
+    id INTEGER PRIMARY KEY,
+    vendor_name TEXT,
+    invoice_number TEXT,
+    invoice_date TEXT,
+    subtotal REAL,
+    tax REAL,
+    total_amount REAL,
+    currency TEXT,
+    is_valid BOOLEAN,
+    validation_errors TEXT,
+    status TEXT,  -- PENDING, REVIEW_REQUIRED, APPROVED
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
-### Using the Swagger UI:
-1. Navigate to http://127.0.0.1:8000/docs
-2. Click on "POST /upload-invoice"
-3. Click "Try it out"
-4. Upload a file
-5. Click "Execute"
+## Testing
 
-## Next Steps / Future Enhancements
+See [TESTING_GUIDE.md](TESTING_GUIDE.md) for comprehensive testing instructions.
 
-### Immediate (Production Ready):
-- [ ] Integrate real OCR service (Azure Computer Vision, AWS Textract, etc.)
-- [ ] Integrate real LLM (OpenAI GPT-4, Azure OpenAI, Claude, etc.)
-- [ ] Add environment configuration (.env file support)
-- [ ] Add comprehensive unit tests
-- [ ] Add logging to file instead of just console
-- [ ] Add request rate limiting
-- [ ] Add file size validation
-
-### Medium-term:
-- [ ] Add database (PostgreSQL) for storing processed invoices
-- [ ] Add authentication/authorization (API keys, OAuth2)
-- [ ] Add background job processing (Celery, Redis Queue)
-- [ ] Add support for multi-page invoices
-- [ ] Add invoice history and search
-- [ ] Add webhook support for async processing
-
-### Long-term:
-- [ ] Frontend integration (Next.js, React)
-- [ ] Multi-tenancy support
-- [ ] Integration with accounting software (QuickBooks, Xero, etc.)
-- [ ] Custom field extraction (user-defined fields)
-- [ ] Batch processing
-- [ ] Analytics dashboard
-
-## Architecture Notes
-
-### Separation of Concerns:
-- **`api/`** - HTTP layer, request/response handling
-- **`services/`** - Business logic, AI processing
-- **`validation/`** - Data validation rules
-- **`models/`** - Data structures and schemas
-
-### Design Principles:
-- **Fail safely, never silently** - Errors are flagged but don't crash the API
-- **Predictable responses** - Consistent JSON structure
-- **Easy to extend** - Clean interfaces for adding features
-- **Production-ready** - Proper logging, error handling, documentation
+### Quick Test
+1. Start backend and frontend servers (use `.\start-servers.ps1`)
+2. Navigate to http://localhost:3000
+3. Upload a test invoice via /upload page
+4. View processed data and approve if valid
 
 ## Troubleshooting
 
-### Port already in use:
+**Frontend can't connect to backend**:
+- Ensure backend is running on port 8000
+- Check Next.js proxy config in `frontend/next.config.js`
+- Look for CORS errors in browser console
+
+**Cannot approve invoice**:
+- Only PENDING invoices can be approved
+- REVIEW_REQUIRED invoices have critical validation errors
+- Check backend logs for details
+
+**Export fails**:
+- Verify pandas and openpyxl are installed
+- Check backend logs for errors
+- Ensure invoices exist in database
+
+**TypeScript/CSS errors in editor**:
+- CSS `@tailwind` warnings are false positives - they work at runtime
+- Run `npm install` in frontend directory
+- Restart TypeScript server if needed
+
+**Port already in use**:
 ```bash
-# Use a different port
+# Backend: Use a different port
 uvicorn app.main:app --port 8001
+
+# Frontend: Next.js will auto-increment port if 3000 is busy
 ```
 
-### Import errors:
-```bash
-# Make sure you're in the project root
-cd e:\alepsis
+## Development
 
-# Make sure dependencies are installed
-pip install -r requirements.txt
+### Backend Development
+```powershell
+# Run with auto-reload
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# View API documentation
+# Open http://127.0.0.1:8000/docs
 ```
 
-### File upload errors:
-- Ensure file is not corrupted
-- Check file size (default FastAPI limit is 1MB for small files)
-- Verify file extension is supported (.pdf, .jpg, .png, etc.)
+### Frontend Development
+```powershell
+cd frontend
+npm run dev
+# Open http://localhost:3000
+```
+
+## Future Enhancements
+
+### Immediate:
+- [ ] Integrate real OCR service (Azure Computer Vision, AWS Textract)
+- [ ] Integrate LLM for better extraction (OpenAI GPT-4, Azure OpenAI)
+- [ ] Add environment configuration (.env support)
+- [ ] Add comprehensive unit tests
+- [ ] Add file size limits and validation
+- [ ] Add request rate limiting
+
+### Medium-term:
+- [ ] User authentication (JWT, OAuth2)
+- [ ] Multi-file batch upload
+- [ ] Invoice search and advanced filtering
+- [ ] Audit trail/history tracking
+- [ ] Email notifications
+- [ ] Custom validation rules
+- [ ] Background job processing (Celery, Redis)
+
+### Long-term:
+- [ ] Integration with accounting software (QuickBooks, Xero)
+- [ ] Multi-tenancy support
+- [ ] Cloud storage integration (Azure Blob, S3)
+- [ ] PDF generation for approved invoices
+- [ ] Analytics dashboard
+- [ ] Mobile app
 
 ## License
 
-This is an MVP project. Add your license here.
+MIT
 
 ## Contact
 

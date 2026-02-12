@@ -10,6 +10,8 @@ from app.database import Base
 class Invoice(Base):
     """
     Invoice table for storing processed invoice data.
+    
+    Phase 1: Added status field for workflow management.
     """
     __tablename__ = "invoices"
     
@@ -22,7 +24,12 @@ class Invoice(Base):
     total_amount = Column(Float, nullable=True)
     currency = Column(String(10), nullable=True)
     is_valid = Column(Boolean, default=False, nullable=False)
-    validation_errors = Column(Text, nullable=True)  # JSON string of errors
+    validation_errors = Column(Text, nullable=True)  # JSON string of errors AND warnings
+    
+    # Phase 1: Status field for processing workflow
+    # Values: "PENDING", "REVIEW_REQUIRED", "APPROVED"
+    status = Column(String(50), default="PENDING", nullable=False)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
     def __repr__(self):

@@ -7,7 +7,8 @@ Currently implements: POST /upload-invoice
 
 import logging
 import json
-from fastapi import APIRouter, File, UploadFile, HTTPException, status, Depends
+from typing import Optional
+from fastapi import APIRouter, File, UploadFile, HTTPException, status, Depends, Query, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -15,13 +16,15 @@ from app.models.schemas import (
     InvoiceResponse, 
     ErrorResponse, 
     InvoiceListResponse,
-    InvoiceDetail
+    InvoiceDetail,
+    InvoiceApprovalResponse
 )
 from app.models.orm_models import Invoice
 from app.database import get_db
-from app.services.ocr import OCRService
+from app.services.ocr import OCRService, OCRNotAvailableError
 from app.services.extraction import get_extraction_service
 from app.validation.validator import get_validator
+from app.services.export import get_export_service
 
 logger = logging.getLogger(__name__)
 
@@ -124,14 +127,34 @@ async def upload_invoice(
         
         # Step 3: Extract text via OCR
         logger.info("Starting OCR extraction")
-        invoice_text = OCRService.extract_text_from_file(file_content, file.filename)
+        try:
+            invoice_text = OCRService.extract_text_from_file(file_content, file.filename)
+        except OCRNotAvailableError as ocr_error:
+            logger.warning(f"OCR not available: {str(ocr_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "success": False,
+                    "error_type": "OCR_NOT_AVAILABLE",
+                    "message": "Cannot process this file: Tesseract-OCR is not installed",
+                    "details": {
+                        "filename": file.filename,
+                        "instructions": str(ocr_error)
+                    }
+                }
+            )
         
         if not invoice_text or len(invoice_text.strip()) < 10:
             logger.warning("OCR returned insufficient text")
+            
+            # Phase 1: Return with explicit processing status
+            empty_validation = get_validator().validate(None, db_session=None)
             return InvoiceResponse(
                 success=False,
+                processing_success=True,  # Processing ran, but no data extracted
+                invoice_valid=False,
                 extracted_data=None,
-                validation=get_validator().validate(None),
+                validation=empty_validation,
                 processing_notes="OCR extraction failed or returned no text"
             )
         
@@ -140,10 +163,17 @@ async def upload_invoice(
         extraction_service = get_extraction_service()
         extracted_data = extraction_service.extract_invoice_data(invoice_text)
         
-        # Step 5: Validate extracted data
+        # Step 5: Validate extracted data (Phase 1: with db session for duplicate check)
         logger.info("Starting data validation")
         validator = get_validator()
-        validation_result = validator.validate(extracted_data)
+        validation_result = validator.validate(extracted_data, db_session=db)
+        
+        # Phase 1: Determine invoice status based on validation
+        invoice_status = "PENDING"  # Default
+        if len(validation_result.errors) > 0:
+            invoice_status = "REVIEW_REQUIRED"  # Has errors, needs review
+        # Note: Status remains PENDING even if validation passes
+        # APPROVED status will be set manually in future phase
         
         # Step 6: Build response
         success = validation_result.is_valid
@@ -154,9 +184,9 @@ async def upload_invoice(
         elif validation_result.warnings:
             processing_notes = f"Extracted successfully with {len(validation_result.warnings)} warnings"
         
-        # Step 7: Save to database
+        # Step 7: Save to database (Phase 1: Enhanced storage with status)
         try:
-            # Combine errors and warnings into JSON string
+            # Phase 1: Store errors and warnings separately but together for safe retrieval
             all_validation_issues = []
             for error in validation_result.errors:
                 all_validation_issues.append({
@@ -180,7 +210,8 @@ async def upload_invoice(
                 total_amount=extracted_data.total_amount if extracted_data else None,
                 currency=extracted_data.currency if extracted_data else None,
                 is_valid=validation_result.is_valid,
-                validation_errors=json.dumps(all_validation_issues) if all_validation_issues else None
+                validation_errors=json.dumps(all_validation_issues) if all_validation_issues else None,
+                status=invoice_status  # Phase 1: Set status based on validation
             )
             
             db.add(invoice_record)
@@ -195,8 +226,11 @@ async def upload_invoice(
         
         logger.info(f"Invoice processing completed: success={success}")
         
+        # Phase 1: Return with explicit processing semantics
         return InvoiceResponse(
-            success=success,
+            success=success,  # Backward compatibility: same as invoice_valid
+            processing_success=True,  # Extraction and validation completed
+            invoice_valid=validation_result.is_valid,  # Clear validation status
             extracted_data=extracted_data,
             validation=validation_result,
             processing_notes=processing_notes
@@ -260,7 +294,7 @@ async def list_invoices(db: Session = Depends(get_db)) -> InvoiceListResponse:
         # Fetch all invoices ordered by created_at DESC
         invoices = db.query(Invoice).order_by(Invoice.created_at.desc()).all()
         
-        # Convert to response format
+        # Convert to response format (Phase 1: includes status)
         invoice_list = [
             {
                 "id": inv.id,
@@ -270,6 +304,7 @@ async def list_invoices(db: Session = Depends(get_db)) -> InvoiceListResponse:
                 "total_amount": inv.total_amount,
                 "currency": inv.currency,
                 "is_valid": inv.is_valid,
+                "status": inv.status,  # Phase 1: Include status
                 "created_at": inv.created_at.isoformat() if inv.created_at else None
             }
             for inv in invoices
@@ -288,6 +323,144 @@ async def list_invoices(db: Session = Depends(get_db)) -> InvoiceListResponse:
                 "success": False,
                 "error_type": "DATABASE_ERROR",
                 "message": "Failed to fetch invoices from database"
+            }
+        )
+
+
+# ============================================================================
+# PHASE 2: EXPORT API - Make Data Usable
+# ============================================================================
+# CRITICAL: Export route MUST come before /{invoice_id} to avoid path matching issues
+
+@router.get(
+    "/invoices/export",
+    status_code=status.HTTP_200_OK,
+    summary="Export invoices to CSV or Excel",
+    description="""
+    Export processed invoice data for offline use in accounting software.
+    
+    **Supported formats:**
+    - CSV (default) - Universal compatibility
+    - Excel (.xlsx) - For Excel/Google Sheets users
+    
+    **Optional filtering:**
+    - status: Filter by invoice status (PENDING, REVIEW_REQUIRED, APPROVED)
+    
+    **Examples:**
+    - GET /invoices/export → CSV with all invoices
+    - GET /invoices/export?format=xlsx → Excel with all invoices
+    - GET /invoices/export?format=csv&status=REVIEW_REQUIRED → CSV with only invoices needing review
+    
+    **Output includes:**
+    - All invoice fields
+    - Human-readable dates
+    - Clean column headers
+    - Accountant-friendly formatting
+    """,
+    responses={
+        200: {
+            "description": "File download with invoice data",
+            "content": {
+                "text/csv": {},
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
+            }
+        },
+        400: {
+            "description": "Invalid parameters",
+            "model": ErrorResponse
+        },
+        500: {
+            "description": "Export failed",
+            "model": ErrorResponse
+        }
+    }
+)
+async def export_invoices(
+    format: str = Query(
+        default="csv",
+        description="Export format: 'csv' or 'xlsx'",
+        regex="^(csv|xlsx)$"
+    ),
+    status: Optional[str] = Query(
+        default=None,
+        description="Filter by status: PENDING, REVIEW_REQUIRED, or APPROVED"
+    ),
+    db: Session = Depends(get_db)
+) -> Response:
+    """
+    Phase 2: Export invoices to CSV or Excel format.
+    
+    Designed for accountants and small businesses to work with invoice data
+    in their preferred tools (Excel, Google Sheets, accounting software).
+    
+    Args:
+        format: Export format ('csv' or 'xlsx')
+        status: Optional status filter
+        db: Database session
+        
+    Returns:
+        File download response with invoice data
+        
+    Raises:
+        HTTPException 400: Invalid parameters
+        HTTPException 500: Export generation failed
+    """
+    logger.info(f"Export request: format={format}, status_filter={status}")
+    
+    try:
+        # Validate status filter if provided
+        valid_statuses = ['PENDING', 'REVIEW_REQUIRED', 'APPROVED']
+        if status and status.upper() not in valid_statuses:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "success": False,
+                    "error_type": "INVALID_STATUS",
+                    "message": f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
+                    "details": {"provided_status": status}
+                }
+            )
+        
+        # Fetch invoices with optional filtering
+        export_service = get_export_service()
+        invoices = export_service.fetch_invoices_for_export(
+            db=db,
+            status_filter=status
+        )
+        
+        # Generate export based on format
+        if format == 'xlsx':
+            file_content = export_service.export_to_excel(invoices)
+        else:  # csv (default)
+            file_content = export_service.export_to_csv(invoices)
+        
+        # Prepare response headers
+        filename = export_service.generate_filename(format)
+        content_type = export_service.get_content_type(format)
+        
+        logger.info(f"Export completed: {len(invoices)} invoices exported to {format}")
+        
+        # Return file download response
+        return Response(
+            content=file_content,
+            media_type=content_type,
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
+        )
+    
+    except HTTPException:
+        raise
+    
+    except Exception as e:
+        logger.error(f"Export failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "success": False,
+                "error_type": "EXPORT_ERROR",
+                "message": "Failed to generate export file",
+                "details": {"error": str(e)}
             }
         )
 
@@ -338,11 +511,19 @@ async def get_invoice(invoice_id: int, db: Session = Depends(get_db)) -> Invoice
                 }
             )
         
-        # Parse validation_errors from JSON string
+        # Parse validation_errors from JSON string (Phase 1: separate errors and warnings)
         validation_errors_list = []
+        validation_warnings_list = []
+        
         if invoice.validation_errors:
             try:
-                validation_errors_list = json.loads(invoice.validation_errors)
+                all_issues = json.loads(invoice.validation_errors)
+                # Phase 1: Separate errors from warnings
+                for issue in all_issues:
+                    if issue.get("severity") == "error":
+                        validation_errors_list.append(f"{issue.get('field', 'unknown')}: {issue.get('message', '')}")
+                    elif issue.get("severity") == "warning":
+                        validation_warnings_list.append(f"{issue.get('field', 'unknown')}: {issue.get('message', '')}")
             except json.JSONDecodeError:
                 logger.warning(f"Could not parse validation_errors for invoice {invoice_id}")
         
@@ -356,7 +537,9 @@ async def get_invoice(invoice_id: int, db: Session = Depends(get_db)) -> Invoice
             total_amount=invoice.total_amount,
             currency=invoice.currency,
             is_valid=invoice.is_valid,
+            status=invoice.status,  # Phase 1: Include status
             validation_errors=validation_errors_list,
+            validation_warnings=validation_warnings_list,  # Phase 1: Separate warnings
             created_at=invoice.created_at.isoformat() if invoice.created_at else None
         )
     
@@ -371,5 +554,131 @@ async def get_invoice(invoice_id: int, db: Session = Depends(get_db)) -> Invoice
                 "success": False,
                 "error_type": "DATABASE_ERROR",
                 "message": "Failed to fetch invoice from database"
+            }
+        )
+
+
+# ============================================================================
+# PHASE 2: APPROVAL WORKFLOW
+# ============================================================================
+
+@router.post(
+    "/invoices/{invoice_id}/approve",
+    response_model=InvoiceApprovalResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Approve an invoice",
+    description="""
+    Manually approve an invoice after review.
+    
+    **Business Rules:**
+    - Invoice must exist
+    - Cannot approve invoices with status REVIEW_REQUIRED (validation errors present)
+    - Changes status from PENDING to APPROVED
+    - Already approved invoices can be re-approved (idempotent)
+    
+    **Use Cases:**
+    - Accountant reviews invoice and confirms it's ready for payment
+    - Finance manager approves invoices for batch processing
+    """,
+    responses={
+        200: {
+            "description": "Invoice approved successfully",
+            "model": InvoiceApprovalResponse
+        },
+        400: {
+            "description": "Cannot approve invoice (has validation errors)",
+            "model": ErrorResponse
+        },
+        404: {
+            "description": "Invoice not found",
+            "model": ErrorResponse
+        },
+        500: {
+            "description": "Approval failed",
+            "model": ErrorResponse
+        }
+    }
+)
+async def approve_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db)
+) -> InvoiceApprovalResponse:
+    """
+    Phase 2: Approve an invoice for payment processing.
+    
+    Finance-safe workflow: Only invoices without validation errors can be approved.
+    
+    Args:
+        invoice_id: Invoice ID to approve
+        db: Database session
+        
+    Returns:
+        InvoiceApprovalResponse with updated status
+        
+    Raises:
+        HTTPException 404: Invoice not found
+        HTTPException 400: Invoice has validation errors
+        HTTPException 500: Database error
+    """
+    logger.info(f"Approval request for invoice_id={invoice_id}")
+    
+    try:
+        # Fetch invoice
+        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+        
+        if not invoice:
+            logger.warning(f"Approval failed: Invoice not found: id={invoice_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "success": False,
+                    "error_type": "NOT_FOUND",
+                    "message": f"Invoice with id {invoice_id} not found"
+                }
+            )
+        
+        # Business rule: Cannot approve invoices with validation errors
+        if invoice.status == "REVIEW_REQUIRED":
+            logger.warning(f"Approval blocked: Invoice {invoice_id} has validation errors")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "success": False,
+                    "error_type": "VALIDATION_ERRORS_PRESENT",
+                    "message": "Cannot approve invoice with validation errors. Please review and correct the data first.",
+                    "details": {
+                        "invoice_id": invoice_id,
+                        "current_status": invoice.status,
+                        "is_valid": invoice.is_valid
+                    }
+                }
+            )
+        
+        # Approve invoice (idempotent - can re-approve already approved invoices)
+        invoice.status = "APPROVED"
+        db.commit()
+        db.refresh(invoice)
+        
+        logger.info(f"Invoice {invoice_id} approved successfully")
+        
+        return InvoiceApprovalResponse(
+            id=invoice.id,
+            status=invoice.status,
+            message="Invoice approved successfully"
+        )
+    
+    except HTTPException:
+        raise
+    
+    except Exception as e:
+        logger.error(f"Approval failed for invoice {invoice_id}: {str(e)}", exc_info=True)
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "success": False,
+                "error_type": "APPROVAL_ERROR",
+                "message": "Failed to approve invoice",
+                "details": {"error": str(e)}
             }
         )

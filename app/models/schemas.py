@@ -44,8 +44,16 @@ class ValidationResult(BaseModel):
 class InvoiceResponse(BaseModel):
     """
     Complete API response for invoice processing.
+    
+    Phase 1: Added processing_success and invoice_valid for clearer semantics.
+    Kept 'success' for backward compatibility.
     """
-    success: bool = Field(..., description="Whether processing completed successfully")
+    success: bool = Field(..., description="[Legacy] Whether processing completed successfully")
+    
+    # Phase 1: Clearer processing semantics
+    processing_success: bool = Field(..., description="True if extraction and validation ran without crashes")
+    invoice_valid: bool = Field(..., description="True if invoice data passed all validation rules")
+    
     extracted_data: Optional[InvoiceData] = Field(None, description="Extracted invoice data")
     validation: ValidationResult = Field(..., description="Validation results")
     processing_notes: Optional[str] = Field(None, description="Additional processing information")
@@ -68,6 +76,8 @@ class ErrorResponse(BaseModel):
 class InvoiceListItem(BaseModel):
     """
     Minimal invoice data for list view.
+    
+    Phase 1: Added status field.
     """
     id: int
     vendor_name: Optional[str]
@@ -76,6 +86,7 @@ class InvoiceListItem(BaseModel):
     total_amount: Optional[float]
     currency: Optional[str]
     is_valid: bool
+    status: str  # Phase 1: PENDING, REVIEW_REQUIRED, APPROVED
     created_at: str  # ISO 8601 format
     
     class Config:
@@ -93,6 +104,8 @@ class InvoiceListResponse(BaseModel):
 class InvoiceDetail(BaseModel):
     """
     Complete invoice data for detail view.
+    
+    Phase 1: Added status field and validation_warnings.
     """
     id: int
     vendor_name: Optional[str]
@@ -103,8 +116,25 @@ class InvoiceDetail(BaseModel):
     total_amount: Optional[float]
     currency: Optional[str]
     is_valid: bool
+    status: str  # Phase 1: PENDING, REVIEW_REQUIRED, APPROVED
     validation_errors: List[str] = Field(default_factory=list)
+    validation_warnings: List[str] = Field(default_factory=list)  # Phase 1: Separate warnings
     created_at: str  # ISO 8601 format
     
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# Phase 2: Approval workflow response
+# ============================================================================
+
+class InvoiceApprovalResponse(BaseModel):
+    """
+    Response for invoice approval endpoint.
+    
+    Phase 2: Simple confirmation of approval action.
+    """
+    id: int = Field(..., description="Invoice ID")
+    status: str = Field(..., description="Updated status (should be APPROVED)")
+    message: str = Field(..., description="Confirmation message")
