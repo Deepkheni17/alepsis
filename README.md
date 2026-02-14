@@ -88,6 +88,36 @@ e:\alepsis/
 └── TESTING_GUIDE.md            # Detailed testing instructions
 ```
 
+## Prerequisites
+
+### Required
+- Python 3.10+
+- Node.js 16+
+- Tesseract-OCR (for scanned PDFs/images)
+
+### Optional (Recommended)
+**Bytez API Key** - For intelligent invoice extraction using Google Gemma-3-27B
+
+The system uses **LLM-based extraction** (Bytez SDK with Google Gemma-3-27B) as the primary method for extracting invoice data. This provides:
+- ✅ **Accurate extraction** from any invoice format
+- ✅ **No pattern maintenance** - works on invoices you've never seen before
+- ✅ **Handles complex layouts** - multi-page, tables, foreign languages
+- ✅ **Automatic fallback** to regex patterns if API unavailable
+
+**Setup Bytez API:**
+1. Get API key from https://www.bytez.com/
+2. Copy `.env.example` to `.env`:
+   ```powershell
+   cp .env.example .env
+   ```
+3. Add your API key to `.env`:
+   ```
+   BYTEZ_API_KEY=your-actual-key-here
+   ```
+
+**Without Bytez API:**
+The system will automatically fall back to regex-based extraction (less accurate but works offline).
+
 ## Quick Start
 
 ### Easy Start (Recommended)

@@ -129,6 +129,12 @@ async def upload_invoice(
         logger.info("Starting OCR extraction")
         try:
             invoice_text = OCRService.extract_text_from_file(file_content, file.filename)
+            logger.info("="*70)
+            logger.info("OCR EXTRACTION COMPLETE")
+            logger.info("="*70)
+            logger.info(f"OCR Text Length: {len(invoice_text)} characters")
+            logger.info(f"OCR Text Content:\n{invoice_text}")
+            logger.info("="*70)
         except OCRNotAvailableError as ocr_error:
             logger.warning(f"OCR not available: {str(ocr_error)}")
             raise HTTPException(
@@ -201,11 +207,31 @@ async def upload_invoice(
                     "severity": warning.severity
                 })
             
+            # Convert line items to JSON for storage
+            line_items_json = None
+            if extracted_data and extracted_data.line_items:
+                line_items_json = json.dumps([
+                    {
+                        "product_name": item.product_name,
+                        "quantity": item.quantity,
+                        "unit_price": item.unit_price,
+                        "amount": item.amount
+                    }
+                    for item in extracted_data.line_items
+                ])
+            
             invoice_record = Invoice(
                 vendor_name=extracted_data.vendor_name if extracted_data else None,
                 invoice_number=extracted_data.invoice_number if extracted_data else None,
                 invoice_date=extracted_data.invoice_date if extracted_data else None,
+                line_items=line_items_json,
                 subtotal=extracted_data.subtotal if extracted_data else None,
+                discount_percentage=extracted_data.discount_percentage if extracted_data else None,
+                discount_amount=extracted_data.discount_amount if extracted_data else None,
+                cgst_rate=extracted_data.cgst_rate if extracted_data else None,
+                cgst_amount=extracted_data.cgst_amount if extracted_data else None,
+                sgst_rate=extracted_data.sgst_rate if extracted_data else None,
+                sgst_amount=extracted_data.sgst_amount if extracted_data else None,
                 tax=extracted_data.tax if extracted_data else None,
                 total_amount=extracted_data.total_amount if extracted_data else None,
                 currency=extracted_data.currency if extracted_data else None,
@@ -242,14 +268,26 @@ async def upload_invoice(
     
     except Exception as e:
         # Log unexpected errors and return 500
-        logger.error(f"Unexpected error processing invoice: {str(e)}", exc_info=True)
+        import traceback
+        full_traceback = traceback.format_exc()
+        logger.error(f"[NEW CODE V2] Unexpected error: {str(e)}")
+        logger.error(f"Full traceback:\n{full_traceback}")
+        
+        # Also write to file for debugging
+        try:
+            with open("e:/alepsis/error_log.txt", "w") as f:
+                f.write(f"Error: {str(e)}\n\n")
+                f.write(f"Traceback:\n{full_traceback}\n")
+        except:
+            pass
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "success": False,
                 "error_type": "PROCESSING_ERROR",
-                "message": "An unexpected error occurred during invoice processing",
-                "details": {"error": str(e)}
+                "message": "[V2] An unexpected error occurred during invoice processing",
+                "details": {"error": str(e), "trace": full_traceback[:200]}
             }
         )
 
@@ -527,12 +565,29 @@ async def get_invoice(invoice_id: int, db: Session = Depends(get_db)) -> Invoice
             except json.JSONDecodeError:
                 logger.warning(f"Could not parse validation_errors for invoice {invoice_id}")
         
+        # Parse line items from JSON
+        line_items_list = []
+        if invoice.line_items:
+            try:
+                items_data = json.loads(invoice.line_items)
+                from app.models.schemas import LineItem
+                line_items_list = [LineItem(**item) for item in items_data]
+            except json.JSONDecodeError:
+                logger.warning(f"Could not parse line_items for invoice {invoice_id}")
+        
         return InvoiceDetail(
             id=invoice.id,
             vendor_name=invoice.vendor_name,
             invoice_number=invoice.invoice_number,
             invoice_date=invoice.invoice_date,
+            line_items=line_items_list,
             subtotal=invoice.subtotal,
+            discount_percentage=invoice.discount_percentage,
+            discount_amount=invoice.discount_amount,
+            cgst_rate=invoice.cgst_rate,
+            cgst_amount=invoice.cgst_amount,
+            sgst_rate=invoice.sgst_rate,
+            sgst_amount=invoice.sgst_amount,
             tax=invoice.tax,
             total_amount=invoice.total_amount,
             currency=invoice.currency,

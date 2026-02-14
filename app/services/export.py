@@ -101,8 +101,14 @@ class InvoiceExportService:
                 'Invoice Number': inv.invoice_number if inv.invoice_number else '',
                 'Invoice Date': inv.invoice_date if inv.invoice_date else '',
                 'Subtotal': inv.subtotal if inv.subtotal is not None else '',
-                'Tax': inv.tax if inv.tax is not None else '',
-                'Total Amount': inv.total_amount if inv.total_amount is not None else '',
+                'Discount %': inv.discount_percentage if inv.discount_percentage is not None else '',
+                'Discount Amount': inv.discount_amount if inv.discount_amount is not None else '',
+                'CGST Rate %': inv.cgst_rate if inv.cgst_rate is not None else '',
+                'CGST Amount': inv.cgst_amount if inv.cgst_amount is not None else '',
+                'SGST Rate %': inv.sgst_rate if inv.sgst_rate is not None else '',
+                'SGST Amount': inv.sgst_amount if inv.sgst_amount is not None else '',
+                'Total Tax': inv.tax if inv.tax is not None else '',
+                'Grand Total': inv.total_amount if inv.total_amount is not None else '',
                 'Currency': inv.currency if inv.currency else '',
                 'Valid': 'Yes' if inv.is_valid else 'No',
                 'Status': inv.status,
@@ -116,7 +122,9 @@ class InvoiceExportService:
         if df.empty:
             df = pd.DataFrame(columns=[
                 'ID', 'Vendor Name', 'Invoice Number', 'Invoice Date',
-                'Subtotal', 'Tax', 'Total Amount', 'Currency',
+                'Subtotal', 'Discount %', 'Discount Amount',
+                'CGST Rate %', 'CGST Amount', 'SGST Rate %', 'SGST Amount',
+                'Total Tax', 'Grand Total', 'Currency',
                 'Valid', 'Status', 'Created At'
             ])
         

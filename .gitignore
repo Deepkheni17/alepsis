@@ -48,6 +48,10 @@ logs/
 .coverage
 htmlcov/
 .tox/
+test_*.py
+test_*.jpg
+test_*.txt
+debug_*.py
 
 # FastAPI / Uvicorn
 *.pid
@@ -60,6 +64,7 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+*.db.backup*
 
 # OS
 Thumbs.db

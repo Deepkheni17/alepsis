@@ -6,9 +6,7 @@ Write-Host ""
 # Check common locations
 $commonPaths = @(
     "C:\Program Files\Tesseract-OCR\tesseract.exe",
-    "C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
-    "C:\Tesseract-OCR\tesseract.exe",
-    "D:\Program Files\Tesseract-OCR\tesseract.exe"
+    
 )
 
 $found = $false

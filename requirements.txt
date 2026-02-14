@@ -22,7 +22,7 @@ httpx==0.26.0
 
 # Optional: For production deployment
 # gunicorn==21.2.0
-# python-dotenv==1.0.0
+python-dotenv==1.0.0
 
 # OCR Integration
 pytesseract>=0.3.10
@@ -31,8 +31,10 @@ Pillow>=10.1.0
 PyPDF2>=3.0.0
 # PyPDF2==3.0.1
 
-# Optional: When integrating real LLM
-# openai==1.6.1
+# LLM Integration for intelligent extraction
+bytez>=0.1.0
+
+# Optional: Additional LLM providers
 # anthropic==0.8.1
 # azure-ai-openai==1.0.0
 
