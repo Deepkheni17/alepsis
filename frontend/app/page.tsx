@@ -10,11 +10,13 @@ export default function Home() {
   
   useEffect(() => {
     // Check if logged in and redirect to dashboard
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         router.push('/dashboard')
       }
-    })
+    }
+    checkSession()
   }, [router])
   
   return (

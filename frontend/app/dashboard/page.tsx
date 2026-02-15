@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
+
 interface Invoice {
   id: number
   vendor_name: string | null
@@ -31,23 +33,34 @@ export default function DashboardPage() {
   const checkAuth = async () => {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError) {
+        throw sessionError
+      }
 
-      if (sessionError || !session) {
+      if (!session) {
         router.push('/login')
         return
       }
 
       setUserEmail(session.user.email || '')
-      await fetchInvoices(session.access_token)
+      setLoading(false) // Stop loading to show dashboard immediately
+      
+      // Fetch invoices in background without blocking UI
+      fetchInvoices(session.access_token).catch(err => {
+        console.error('Failed to fetch invoices:', err)
+        setError('Failed to load invoices. Please refresh the page.')
+      })
     } catch (err: any) {
       setError(err.message || 'Authentication failed')
+      setLoading(false)
       router.push('/login')
     }
   }
 
   const fetchInvoices = async (accessToken: string) => {
     try {
-      const response = await fetch('http://localhost:8000/invoices', {
+      const response = await fetch(`${API_BASE_URL}/invoices`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -60,9 +73,8 @@ export default function DashboardPage() {
       const data = await response.json()
       setInvoices(data.invoices || [])
     } catch (err: any) {
+      console.error('Fetch invoices error:', err)
       setError(err.message || 'Failed to load invoices')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -76,7 +88,7 @@ export default function DashboardPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      const response = await fetch(`http://localhost:8000/invoices/export?format=${format}`, {
+      const response = await fetch(`${API_BASE_URL}/invoices/export?format=${format}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -100,7 +112,7 @@ export default function DashboardPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      const response = await fetch(`http://localhost:8000/invoices/${invoiceId}/approve`, {
+      const response = await fetch(`${API_BASE_URL}/invoices/${invoiceId}/approve`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
@@ -126,7 +138,7 @@ export default function DashboardPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      const response = await fetch(`http://localhost:8000/invoices/${invoiceId}`, {
+      const response = await fetch(`${API_BASE_URL}/invoices/${invoiceId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`

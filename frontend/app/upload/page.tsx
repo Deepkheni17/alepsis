@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { uploadInvoice, type UploadResponse } from '../../lib/api'
+import { uploadInvoice, type UploadResponse } from '../lib/api'
 import { supabase } from '../../lib/supabase'
 
 export default function UploadPage() {
@@ -14,11 +14,14 @@ export default function UploadPage() {
   
   useEffect(() => {
     // Check authentication
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         router.push('/login')
       }
-    })
+    }
+    
+    checkAuth()
   }, [router])
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,7 +163,7 @@ export default function UploadPage() {
             <div className="card border-l-4 border-red-500">
               <h2 className="text-xl font-semibold mb-3 text-red-800">Validation Errors</h2>
               <ul className="space-y-2">
-                {result.validation.errors.map((err, idx) => (
+                {result.validation.errors.map((err: any, idx: number) => (
                   <li key={idx} className="text-sm">
                     <span className="font-medium text-red-700">{err.field}:</span>{' '}
                     <span className="text-red-600">{err.message}</span>
@@ -175,7 +178,7 @@ export default function UploadPage() {
             <div className="card border-l-4 border-yellow-500">
               <h2 className="text-xl font-semibold mb-3 text-yellow-800">Validation Warnings</h2>
               <ul className="space-y-2">
-                {result.validation.warnings.map((warn, idx) => (
+                {result.validation.warnings.map((warn: any, idx: number) => (
                   <li key={idx} className="text-sm">
                     <span className="font-medium text-yellow-700">{warn.field}:</span>{' '}
                     <span className="text-yellow-600">{warn.message}</span>

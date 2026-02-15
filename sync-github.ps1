@@ -52,7 +52,7 @@ if ($changes) {
     
     # Create commit
     Write-Host "Creating commit..." -ForegroundColor Yellow
-    $commitMessage = "Implement Supabase authentication with sign-up/sign-in and fix import paths"
+    $commitMessage = "Fix authentication redirect and API authorization issues - use SSR cookies, fix 401 errors, update JWT secret"
     & git commit -m $commitMessage
     Write-Host ""
 } else {
