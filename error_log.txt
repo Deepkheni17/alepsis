@@ -1,0 +1,72 @@
+Error: Invalid JSON from LLM: Expecting ',' delimiter: line 70 column 20 (char 1518). Output: {
+  "vendor_name": "SOMNATH HOTFIX",
+  "invoice_number": "37",
+  "invoice_date": "2026-01-30",
+  "line_items": [
+    {
+      "product_name": "WSN/sAC",
+      "quantity": "639.000",
+      "unit_price": "639.000",
+      "amount": "639.000"
+    },
+    {
+      "product_name": "SAC",
+      "quantity": "388.000",
+      "unit_price": "388.000",
+      "amount": "388.000"
+    },
+    {
+      "product_name": "SAC",
+      "quantity": "186.000",
+      "unit_price": "186.000",
+      "amount": "186.000"
+    },
+
+Traceback:
+Traceback (most recent call last):
+  File "E:\alepsis\app\services\extraction.py", line 94, in extract_invoice_data
+    extracted_json = json.loads(cleaned_output)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 70 column 20 (char 1518)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\alepsis\app\api\routes.py", line 170, in upload_invoice
+    extracted_data = extraction_service.extract_invoice_data(invoice_text)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\alepsis\app\services\extraction.py", line 98, in extract_invoice_data
+    raise Exception(error_msg)
+Exception: Invalid JSON from LLM: Expecting ',' delimiter: line 70 column 20 (char 1518). Output: {
+  "vendor_name": "SOMNATH HOTFIX",
+  "invoice_number": "37",
+  "invoice_date": "2026-01-30",
+  "line_items": [
+    {
+      "product_name": "WSN/sAC",
+      "quantity": "639.000",
+      "unit_price": "639.000",
+      "amount": "639.000"
+    },
+    {
+      "product_name": "SAC",
+      "quantity": "388.000",
+      "unit_price": "388.000",
+      "amount": "388.000"
+    },
+    {
+      "product_name": "SAC",
+      "quantity": "186.000",
+      "unit_price": "186.000",
+      "amount": "186.000"
+    },
+

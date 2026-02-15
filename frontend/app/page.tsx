@@ -1,86 +1,67 @@
-import Link from 'next/link'
-import { fetchInvoices, type Invoice } from './lib/api'
-import DashboardActions from './components/DashboardActions'
+'use client'
 
-export default async function Home() {
-  let invoices: Invoice[] = []
-  let error = null
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { supabase } from '../lib/supabase'
+
+export default function Home() {
+  const router = useRouter()
   
-  try {
-    const data = await fetchInvoices()
-    invoices = data.invoices
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Failed to load invoices'
-  }
-  
-  // Compute summary
-  const total = invoices.length
-  const pending = invoices.filter(inv => inv.status === 'PENDING').length
-  const reviewRequired = invoices.filter(inv => inv.status === 'REVIEW_REQUIRED').length
-  const approved = invoices.filter(inv => inv.status === 'APPROVED').length
+  useEffect(() => {
+    // Check if logged in and redirect to dashboard
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.push('/dashboard')
+      }
+    })
+  }, [router])
   
   return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Invoice Processing System</h1>
-      
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded p-4 mb-6">
-          {error}
-        </div>
-      )}
-      
-      {/* Action Buttons - Now using Client Component */}
-      <DashboardActions />
-      
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="card">
-          <div className="text-gray-600 text-sm mb-1">Total Invoices</div>
-          <div className="text-3xl font-bold">{total}</div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="max-w-4xl mx-auto px-4 text-center">
+        <h1 className="text-5xl font-bold mb-6 text-gray-900">
+          Invoice Processing System
+        </h1>
+        <p className="text-xl text-gray-600 mb-8">
+          AI-powered invoice extraction and validation with multi-user support
+        </p>
+        
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+            <div className="p-4 border border-gray-200 rounded">
+              <div className="font-semibold text-blue-600 mb-2">🔐 Secure Authentication</div>
+              <p className="text-sm text-gray-600">Email/password and Google OAuth login</p>
+            </div>
+            <div className="p-4 border border-gray-200 rounded">
+              <div className="font-semibold text-blue-600 mb-2">🤖 AI Extraction</div>
+              <p className="text-sm text-gray-600">Automatic data extraction from invoices</p>
+            </div>
+            <div className="p-4 border border-gray-200 rounded">
+              <div className="font-semibold text-blue-600 mb-2">✅ Validation</div>
+              <p className="text-sm text-gray-600">Smart validation and error detection</p>
+            </div>
+            <div className="p-4 border border-gray-200 rounded">
+              <div className="font-semibold text-blue-600 mb-2">👥 Multi-User</div>
+              <p className="text-sm text-gray-600">Isolated data for each user account</p>
+            </div>
+          </div>
         </div>
         
-        <div className="card">
-          <div className="text-gray-600 text-sm mb-1">Pending</div>
-          <div className="text-3xl font-bold text-yellow-600">{pending}</div>
-        </div>
-        
-        <div className="card">
-          <div className="text-gray-600 text-sm mb-1">Review Required</div>
-          <div className="text-3xl font-bold text-orange-600">{reviewRequired}</div>
-        </div>
-        
-        <div className="card">
-          <div className="text-gray-600 text-sm mb-1">Approved</div>
-          <div className="text-3xl font-bold text-green-600">{approved}</div>
-        </div>
-      </div>
-      
-      {/* Quick Links */}
-      <div className="card">
-        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <div className="space-y-2">
-          <Link href="/invoices" className="block text-blue-600 hover:text-blue-800">
-            → View all invoices
+        <div className="flex gap-4 justify-center">
+          <Link
+            href="/login"
+            className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+          >
+            Sign In
           </Link>
-          <Link href="/upload" className="block text-blue-600 hover:text-blue-800">
-            → Upload new invoice
+          <Link
+            href="/dashboard"
+            className="px-8 py-3 bg-white border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition"
+          >
+            View Dashboard
           </Link>
-          {reviewRequired > 0 && (
-            <a 
-              href="/api/invoices/export?format=csv&status=REVIEW_REQUIRED" 
-              className="block text-orange-600 hover:text-orange-800"
-            >
-              → Export invoices needing review ({reviewRequired})
-            </a>
-          )}
-          {approved > 0 && (
-            <a 
-              href="/api/invoices/export?format=csv&status=APPROVED" 
-              className="block text-green-600 hover:text-green-800"
-            >
-              → Export approved invoices ({approved})
-            </a>
-          )}
         </div>
       </div>
     </div>

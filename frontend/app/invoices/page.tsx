@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { fetchInvoices } from '../lib/api'
+import { fetchInvoices } from '../../lib/api'
 import InvoiceTable from '../components/InvoiceTable'
 
 export default async function InvoicesPage() {

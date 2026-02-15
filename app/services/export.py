@@ -163,21 +163,28 @@ class InvoiceExportService:
     @staticmethod
     def fetch_invoices_for_export(
         db: Session, 
-        status_filter: Optional[str] = None
+        status_filter: Optional[str] = None,
+        user_id: Optional[object] = None
     ) -> List[Invoice]:
         """
         Fetch invoices from database with optional filtering.
         
-        Phase 2: Minimal, safe filtering by status only.
+        Phase 2: Minimal, safe filtering by status and user.
         
         Args:
             db: Database session
             status_filter: Optional status to filter by (PENDING, REVIEW_REQUIRED, APPROVED)
+            user_id: Optional user UUID to filter by (for multi-user support)
             
         Returns:
             List of Invoice objects ordered by creation date (newest first)
         """
         query = db.query(Invoice).order_by(Invoice.created_at.desc())
+        
+        # Apply user filter if provided (multi-user support)
+        if user_id:
+            query = query.filter(Invoice.user_id == user_id)
+            logger.info(f"Filtering export by user_id: {user_id}")
         
         # Apply status filter if provided
         if status_filter:

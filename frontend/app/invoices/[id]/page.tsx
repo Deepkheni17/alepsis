@@ -1,79 +1,164 @@
-import Link from 'next/link'
-import { fetchInvoice } from '../../lib/api'
-import ApproveButton from '../../components/ApproveButton'
-import DeleteButton from '../../components/DeleteButton'
+'use client'
 
-export default async function InvoiceDetailPage({
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { fetchInvoice } from '../../../lib/api'
+import { supabase } from '../../../lib/supabase'
+import type { InvoiceDetail } from '../../../lib/api'
+
+export default function InvoiceDetailPage({
   params,
 }: {
   params: { id: string }
 }) {
-  let invoice = null
-  let error = null
+  const router = useRouter()
+  const [invoice, setInvoice] = useState<InvoiceDetail | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
   
-  try {
-    invoice = await fetchInvoice(params.id)
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Failed to load invoice'
+  useEffect(() => {
+    loadInvoice()
+  }, [params.id])
+  
+  const loadInvoice = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
+      
+      const data = await fetchInvoice(params.id, session.access_token)
+      setInvoice(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load invoice')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const handleApprove = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      
+      const response = await fetch(`http://localhost:8000/invoices/${params.id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail?.message || 'Approval failed')
+      }
+      
+      // Reload invoice
+      await loadInvoice()
+    } catch (err: any) {
+      alert(err.message || 'Failed to approve invoice')
+    }
+  }
+  
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this invoice?')) return
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      
+      const response = await fetch(`http://localhost:8000/invoices/${params.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
+      
+      if (!response.ok) throw new Error('Delete failed')
+      
+      router.push('/dashboard')
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete invoice')
+    }
+  }
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
   }
   
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto py-8">
         <div className="bg-red-50 border border-red-200 text-red-800 rounded p-4 mb-6">
           {error}
         </div>
-        <Link href="/invoices" className="btn-secondary">
-          ← Back to Invoices
+        <Link href="/dashboard" className="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+          ← Back to Dashboard
         </Link>
       </div>
     )
   }
   
   if (!invoice) {
-    return <div>Loading...</div>
+    return <div>No invoice data</div>
   }
   
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return <span className="badge badge-pending">PENDING</span>
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">PENDING</span>
       case 'REVIEW_REQUIRED':
-        return <span className="badge badge-review">REVIEW REQUIRED</span>
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">REVIEW REQUIRED</span>
       case 'APPROVED':
-        return <span className="badge badge-approved">APPROVED</span>
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">APPROVED</span>
       default:
-        return <span className="badge">{status}</span>
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{status}</span>
     }
   }
   
   const canApprove = invoice.status !== 'REVIEW_REQUIRED' && invoice.status !== 'APPROVED'
   
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Invoice #{invoice.id}</h1>
-        <Link href="/invoices" className="btn-secondary">
-          ← Back to List
+        <Link href="/dashboard" className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+          ← Back to Dashboard
         </Link>
       </div>
       
       {/* Status and Actions */}
-      <div className="card mb-6 flex justify-between items-center">
+      <div className="bg-white rounded-lg shadow p-6 mb-6 flex justify-between items-center">
         <div>
           <div className="text-sm text-gray-600 mb-1">Status</div>
           <div>{getStatusBadge(invoice.status)}</div>
         </div>
         <div className="flex gap-3">
           {canApprove && (
-            <ApproveButton invoiceId={invoice.id} />
+            <button
+              onClick={handleApprove}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Approve
+            </button>
           )}
           {invoice.status === 'REVIEW_REQUIRED' && (
             <div className="text-sm text-orange-600">
               Cannot approve: Has validation errors
             </div>
           )}
-          <DeleteButton invoiceId={invoice.id} />
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Delete
+          </button>
         </div>
       </div>
       

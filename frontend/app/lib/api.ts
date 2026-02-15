@@ -81,8 +81,14 @@ export interface ApprovalResponse {
 /**
  * Fetch all invoices
  */
-export async function fetchInvoices(): Promise<InvoiceListResponse> {
+export async function fetchInvoices(accessToken?: string): Promise<InvoiceListResponse> {
+  const headers: HeadersInit = {}
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`
+  }
+  
   const res = await fetch(`${getBaseUrl()}/invoices`, {
+    headers,
     cache: 'no-store'
   })
   
@@ -96,8 +102,14 @@ export async function fetchInvoices(): Promise<InvoiceListResponse> {
 /**
  * Fetch single invoice by ID
  */
-export async function fetchInvoice(id: string): Promise<InvoiceDetail> {
+export async function fetchInvoice(id: string, accessToken?: string): Promise<InvoiceDetail> {
+  const headers: HeadersInit = {}
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`
+  }
+  
   const res = await fetch(`${getBaseUrl()}/invoices/${id}`, {
+    headers,
     cache: 'no-store'
   })
   
@@ -114,12 +126,18 @@ export async function fetchInvoice(id: string): Promise<InvoiceDetail> {
 /**
  * Upload invoice file
  */
-export async function uploadInvoice(file: File): Promise<UploadResponse> {
+export async function uploadInvoice(file: File, accessToken?: string): Promise<UploadResponse> {
   const formData = new FormData()
   formData.append('file', file)
   
+  const headers: HeadersInit = {}
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`
+  }
+  
   const res = await fetch(`${getBaseUrl()}/upload-invoice`, {
     method: 'POST',
+    headers,
     body: formData,
   })
   

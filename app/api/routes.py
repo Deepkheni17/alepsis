@@ -19,8 +19,9 @@ from app.models.schemas import (
     InvoiceDetail,
     InvoiceApprovalResponse
 )
-from app.models.orm_models import Invoice
+from app.models.orm_models import Invoice, User
 from app.database import get_db
+from app.auth import get_current_user
 from app.services.ocr import OCRService, OCRNotAvailableError
 from app.services.extraction import get_extraction_service
 from app.validation.validator import get_validator
@@ -75,6 +76,7 @@ router = APIRouter()
 )
 async def upload_invoice(
     file: UploadFile = File(..., description="Invoice file (PDF or image)"),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> InvoiceResponse:
     """
@@ -221,6 +223,7 @@ async def upload_invoice(
                 ])
             
             invoice_record = Invoice(
+                user_id=current_user.id,
                 vendor_name=extracted_data.vendor_name if extracted_data else None,
                 invoice_number=extracted_data.invoice_number if extracted_data else None,
                 invoice_date=extracted_data.invoice_date if extracted_data else None,
@@ -321,7 +324,10 @@ async def health_check():
     summary="List all invoices",
     description="Fetch all processed invoices ordered by creation date (newest first)"
 )
-async def list_invoices(db: Session = Depends(get_db)) -> InvoiceListResponse:
+async def list_invoices(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> InvoiceListResponse:
     """
     Get all invoices from the database.
     
@@ -329,8 +335,10 @@ async def list_invoices(db: Session = Depends(get_db)) -> InvoiceListResponse:
         InvoiceListResponse with count and list of invoices
     """
     try:
-        # Fetch all invoices ordered by created_at DESC
-        invoices = db.query(Invoice).order_by(Invoice.created_at.desc()).all()
+        # Fetch all invoices for current user ordered by created_at DESC
+        invoices = db.query(Invoice).filter(
+            Invoice.user_id == current_user.id
+        ).order_by(Invoice.created_at.desc()).all()
         
         # Convert to response format (Phase 1: includes status)
         invoice_list = [
@@ -423,6 +431,7 @@ async def export_invoices(
         default=None,
         description="Filter by status: PENDING, REVIEW_REQUIRED, or APPROVED"
     ),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> Response:
     """
@@ -459,11 +468,12 @@ async def export_invoices(
                 }
             )
         
-        # Fetch invoices with optional filtering
+        # Fetch invoices for current user with optional filtering
         export_service = get_export_service()
         invoices = export_service.fetch_invoices_for_export(
             db=db,
-            status_filter=status
+            status_filter=status,
+            user_id=current_user.id
         )
         
         # Generate export based on format
@@ -520,7 +530,11 @@ async def export_invoices(
         }
     }
 )
-async def get_invoice(invoice_id: int, db: Session = Depends(get_db)) -> InvoiceDetail:
+async def get_invoice(
+    invoice_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> InvoiceDetail:
     """
     Get a single invoice by its ID.
     
@@ -535,8 +549,11 @@ async def get_invoice(invoice_id: int, db: Session = Depends(get_db)) -> Invoice
         HTTPException 404 if invoice not found
     """
     try:
-        # Fetch invoice by primary key
-        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+        # Fetch invoice by primary key and user_id
+        invoice = db.query(Invoice).filter(
+            Invoice.id == invoice_id,
+            Invoice.user_id == current_user.id
+        ).first()
         
         if not invoice:
             logger.warning(f"Invoice not found: id={invoice_id}")
@@ -656,6 +673,7 @@ async def get_invoice(invoice_id: int, db: Session = Depends(get_db)) -> Invoice
 )
 async def approve_invoice(
     invoice_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> InvoiceApprovalResponse:
     """
@@ -678,8 +696,11 @@ async def approve_invoice(
     logger.info(f"Approval request for invoice_id={invoice_id}")
     
     try:
-        # Fetch invoice
-        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+        # Fetch invoice for current user
+        invoice = db.query(Invoice).filter(
+            Invoice.id == invoice_id,
+            Invoice.user_id == current_user.id
+        ).first()
         
         if not invoice:
             logger.warning(f"Approval failed: Invoice not found: id={invoice_id}")
@@ -772,6 +793,7 @@ async def approve_invoice(
 )
 async def delete_invoice(
     invoice_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> dict:
     """
@@ -791,8 +813,11 @@ async def delete_invoice(
     logger.info(f"Delete request for invoice_id={invoice_id}")
     
     try:
-        # Fetch invoice
-        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+        # Fetch invoice for current user
+        invoice = db.query(Invoice).filter(
+            Invoice.id == invoice_id,
+            Invoice.user_id == current_user.id
+        ).first()
         
         if not invoice:
             logger.warning(f"Delete failed: Invoice not found: id={invoice_id}")

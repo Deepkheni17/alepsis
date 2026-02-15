@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { uploadInvoice, type UploadResponse } from '../lib/api'
+import { uploadInvoice, type UploadResponse } from '../../lib/api'
+import { supabase } from '../../lib/supabase'
 
 export default function UploadPage() {
   const router = useRouter()
@@ -10,6 +11,15 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<UploadResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  
+  useEffect(() => {
+    // Check authentication
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.push('/login')
+      }
+    })
+  }, [router])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,7 +34,12 @@ export default function UploadPage() {
     setResult(null)
     
     try {
-      const data = await uploadInvoice(file)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Not authenticated')
+      }
+      
+      const data = await uploadInvoice(file, session.access_token)
       setResult(data)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')
