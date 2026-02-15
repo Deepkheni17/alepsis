@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { fetchInvoice } from '../../lib/api'
 import ApproveButton from '../../components/ApproveButton'
+import DeleteButton from '../../components/DeleteButton'
 
 export default async function InvoiceDetailPage({
   params,
@@ -63,14 +64,17 @@ export default async function InvoiceDetailPage({
           <div className="text-sm text-gray-600 mb-1">Status</div>
           <div>{getStatusBadge(invoice.status)}</div>
         </div>
-        {canApprove && (
-          <ApproveButton invoiceId={invoice.id} />
-        )}
-        {invoice.status === 'REVIEW_REQUIRED' && (
-          <div className="text-sm text-orange-600">
-            Cannot approve: Has validation errors
-          </div>
-        )}
+        <div className="flex gap-3">
+          {canApprove && (
+            <ApproveButton invoiceId={invoice.id} />
+          )}
+          {invoice.status === 'REVIEW_REQUIRED' && (
+            <div className="text-sm text-orange-600">
+              Cannot approve: Has validation errors
+            </div>
+          )}
+          <DeleteButton invoiceId={invoice.id} />
+        </div>
       </div>
       
       {/* Invoice Details */}

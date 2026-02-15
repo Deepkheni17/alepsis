@@ -737,3 +737,98 @@ async def approve_invoice(
                 "details": {"error": str(e)}
             }
         )
+
+
+@router.delete(
+    "/invoices/{invoice_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Delete an invoice",
+    description="""
+    Delete an invoice from the database.
+    
+    **Business Rules:**
+    - Invoice must exist
+    - Permanently removes the invoice and all associated data
+    - This action cannot be undone
+    
+    **Use Cases:**
+    - Remove duplicate invoices
+    - Delete test/erroneous uploads
+    - Clean up rejected invoices
+    """,
+    responses={
+        200: {
+            "description": "Invoice deleted successfully"
+        },
+        404: {
+            "description": "Invoice not found",
+            "model": ErrorResponse
+        },
+        500: {
+            "description": "Deletion failed",
+            "model": ErrorResponse
+        }
+    }
+)
+async def delete_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db)
+) -> dict:
+    """
+    Delete an invoice from the database.
+    
+    Args:
+        invoice_id: Invoice ID to delete
+        db: Database session
+        
+    Returns:
+        Success message with deleted invoice ID
+        
+    Raises:
+        HTTPException 404: Invoice not found
+        HTTPException 500: Database error
+    """
+    logger.info(f"Delete request for invoice_id={invoice_id}")
+    
+    try:
+        # Fetch invoice
+        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+        
+        if not invoice:
+            logger.warning(f"Delete failed: Invoice not found: id={invoice_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "success": False,
+                    "error_type": "NOT_FOUND",
+                    "message": f"Invoice with id {invoice_id} not found"
+                }
+            )
+        
+        # Delete invoice
+        db.delete(invoice)
+        db.commit()
+        
+        logger.info(f"Invoice {invoice_id} deleted successfully")
+        
+        return {
+            "success": True,
+            "message": "Invoice deleted successfully",
+            "id": invoice_id
+        }
+    
+    except HTTPException:
+        raise
+    
+    except Exception as e:
+        logger.error(f"Delete failed for invoice {invoice_id}: {str(e)}", exc_info=True)
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "success": False,
+                "error_type": "DELETE_ERROR",
+                "message": "Failed to delete invoice",
+                "details": {"error": str(e)}
+            }
+        )

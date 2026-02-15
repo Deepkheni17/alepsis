@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { approveInvoice, type Invoice } from '../lib/api'
+import { approveInvoice, deleteInvoice, type Invoice } from '../lib/api'
 
 interface InvoiceTableProps {
   invoices: Invoice[]
@@ -10,6 +10,7 @@ interface InvoiceTableProps {
 
 export default function InvoiceTable({ invoices }: InvoiceTableProps) {
   const [approvingId, setApprovingId] = useState<number | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
   const [localInvoices, setLocalInvoices] = useState(invoices)
   
   const handleApprove = async (id: number) => {
@@ -29,6 +30,24 @@ export default function InvoiceTable({ invoices }: InvoiceTableProps) {
       alert(e instanceof Error ? e.message : 'Failed to approve')
     } finally {
       setApprovingId(null)
+    }
+  }
+  
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
+    
+    setDeletingId(id)
+    try {
+      await deleteInvoice(id)
+      
+      // Remove from local state
+      setLocalInvoices(prev => prev.filter(inv => inv.id !== id))
+      
+      alert('Invoice deleted successfully')
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to delete')
+    } finally {
+      setDeletingId(null)
     }
   }
   
@@ -93,6 +112,13 @@ export default function InvoiceTable({ invoices }: InvoiceTableProps) {
                       {approvingId === invoice.id ? 'Approving...' : 'Approve'}
                     </button>
                   )}
+                  <button
+                    onClick={() => handleDelete(invoice.id)}
+                    disabled={deletingId === invoice.id}
+                    className="text-red-600 hover:text-red-800 text-xs font-medium px-2 py-1 border border-red-300 rounded hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {deletingId === invoice.id ? 'Deleting...' : 'Delete'}
+                  </button>
                 </div>
               </td>
             </tr>
