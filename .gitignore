@@ -66,6 +66,19 @@ temp/
 *.sqlite3
 *.db.backup*
 
+# Debug / verify / example scripts (dev-only, not for production)
+verify_*.py
+example_*.py
+error_log.txt
+fix_db.py
+debug_api.py
+
+# Frontend debug pages
+frontend/app/auth-debug/
+
+# Cleanup script (dev utility)
+cleanup.bat
+
 # OS
 Thumbs.db
 .DS_Store
