@@ -163,7 +163,7 @@ class InvoiceDetail(BaseModel):
     status: str
     validation_errors: List[str] = Field(default_factory=list)
     validation_warnings: List[str] = Field(default_factory=list)
-    created_at: str
+    created_at: Optional[str] = None
 
     class Config:
         from_attributes = True

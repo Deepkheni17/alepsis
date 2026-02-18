@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { fetchInvoice } from '../../../lib/api'
+import { fetchInvoice } from '../../lib/api'
 import { supabase } from '../../../lib/supabase'
-import type { InvoiceDetail } from '../../../lib/api'
+import type { InvoiceDetail } from '../../lib/api'
 
 export default function InvoiceDetailPage({
   params,

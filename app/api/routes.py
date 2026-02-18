@@ -362,13 +362,14 @@ async def list_invoices(
         )
     
     except Exception as e:
-        logger.error(f"Error fetching invoices: {str(e)}", exc_info=True)
+        import traceback
+        logger.error(f"Error fetching invoices: {str(e)}\n{traceback.format_exc()}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "success": False,
                 "error_type": "DATABASE_ERROR",
-                "message": "Failed to fetch invoices from database"
+                "message": f"Failed to fetch invoices from database: {str(e)}"
             }
         )
 

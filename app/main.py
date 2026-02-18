@@ -88,10 +88,16 @@ app = FastAPI(
 )
 
 # Configure CORS
-# In production, restrict this to specific origins
+# IMPORTANT: When allow_credentials=True, you CANNOT use allow_origins=["*"]
+# The browser will reject the response. Must list explicit origins.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production: ["https://yourdomain.com"]
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

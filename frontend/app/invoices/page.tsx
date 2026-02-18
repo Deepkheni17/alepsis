@@ -1,16 +1,46 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { fetchInvoices } from '../../lib/api'
+import { fetchInvoices, Invoice } from '../lib/api'
+import { supabase } from '../../lib/supabase'
 import InvoiceTable from '../components/InvoiceTable'
 
-export default async function InvoicesPage() {
-  let invoices = []
-  let error = null
-  
-  try {
-    const data = await fetchInvoices()
-    invoices = data.invoices
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Failed to load invoices'
+export default function InvoicesPage() {
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    loadInvoices()
+  }, [])
+
+  const loadInvoices = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        router.push('/login')
+        return
+      }
+
+      const data = await fetchInvoices(session.access_token)
+      setInvoices(data.invoices)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load invoices')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
   }
   
   return (

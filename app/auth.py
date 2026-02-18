@@ -3,10 +3,12 @@ Supabase Authentication Module
 
 Handles JWT token verification and user management for FastAPI endpoints.
 Supports email/password and OAuth (Google) authentication via Supabase Auth.
+Uses JWKS (JSON Web Key Set) for secure JWT verification.
 """
 
 import os
 import jwt
+from jwt import PyJWKClient
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -24,14 +26,22 @@ security = HTTPBearer()
 
 # Load Supabase configuration from environment
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 # Validate required environment variables
-if not SUPABASE_JWT_SECRET:
-    raise ValueError("SUPABASE_JWT_SECRET environment variable is required")
 if not SUPABASE_URL:
     raise ValueError("SUPABASE_URL environment variable is required")
+
+# Construct JWKS URL from Supabase URL
+JWKS_URL = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+
+# Initialize JWKS client for public key verification
+try:
+    jwks_client = PyJWKClient(JWKS_URL, cache_keys=True, max_cached_keys=10)
+    logger.info(f"JWKS client initialized with URL: {JWKS_URL}")
+except Exception as e:
+    logger.error(f"Failed to initialize JWKS client: {str(e)}")
+    raise ValueError(f"Failed to initialize JWKS client: {str(e)}")
 
 
 class AuthError(Exception):
@@ -43,7 +53,11 @@ class AuthError(Exception):
 
 def verify_jwt_token(token: str) -> Dict:
     """
-    Verify and decode Supabase JWT token.
+    Verify and decode Supabase JWT token using JWKS public key.
+    
+    This method uses the JSON Web Key Set (JWKS) endpoint from Supabase
+    to fetch the public key and verify the JWT signature. This is more
+    secure than using a shared secret as it uses asymmetric cryptography.
     
     Args:
         token: JWT token from Authorization header
@@ -55,11 +69,15 @@ def verify_jwt_token(token: str) -> Dict:
         AuthError: If token is invalid, expired, or malformed
     """
     try:
-        # Decode and verify token
+        # Get the signing key from JWKS
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        
+        # Decode and verify token using the public key
+        # Supabase may use RS256 or ES256 depending on configuration
         payload = jwt.decode(
             token,
-            SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
+            signing_key.key,
+            algorithms=["RS256", "ES256"],  # Support both RSA and Elliptic Curve
             audience="authenticated",
             options={
                 "verify_aud": True,
@@ -110,16 +128,27 @@ def get_or_create_user(db: Session, user_id: str, email: str) -> User:
     user = db.query(User).filter(User.id == user_uuid).first()
     
     if not user:
-        # Create new user
-        user = User(
-            id=user_uuid,
-            email=email,
-            created_at=datetime.utcnow()
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        logger.info(f"Created new user: {email} (id={user_uuid})")
+        # Create new user — wrapped in try/except to handle RLS or constraint errors
+        try:
+            user = User(
+                id=user_uuid,
+                email=email,
+                created_at=datetime.utcnow()
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            logger.info(f"Created new user: {email} (id={user_uuid})")
+        except Exception as create_err:
+            # Rollback and try to fetch again (race condition or RLS issue)
+            db.rollback()
+            logger.warning(f"User creation failed ({create_err}), retrying fetch...")
+            user = db.query(User).filter(User.id == user_uuid).first()
+            if not user:
+                raise AuthError(
+                    f"Failed to create or find user in database: {str(create_err)}",
+                    status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
     
     return user
 

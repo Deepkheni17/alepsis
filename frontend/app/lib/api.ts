@@ -3,14 +3,9 @@
  * Handles both server-side (SSR) and client-side requests
  */
 
-// Use absolute URL for server-side requests, relative for client-side
+// Use direct backend URL for both server-side and client-side
 const getBaseUrl = () => {
-  // Server-side: use direct backend URL
-  if (typeof window === 'undefined') {
-    return 'http://127.0.0.1:8000'
-  }
-  // Client-side: use Next.js proxy
-  return '/api'
+  return process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
 }
 
 export interface LineItem {
