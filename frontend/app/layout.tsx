@@ -1,10 +1,9 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Invoice Processing System',
-  description: 'AI-powered invoice processing and management',
+  title: 'Alepsis — AI-Powered Invoice Processing',
+  description: 'Automate invoice extraction and validation with AI. Upload, extract, and manage all your invoices in one secure platform.',
 }
 
 export default function RootLayout({
@@ -14,23 +13,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body>
-        <nav className="bg-gray-800 text-white p-4">
-          <div className="container mx-auto flex gap-6">
-            <Link href="/" className="font-bold hover:text-gray-300">
-              Invoice System
-            </Link>
-            <Link href="/invoices" className="hover:text-gray-300">
-              All Invoices
-            </Link>
-            <Link href="/upload" className="hover:text-gray-300">
-              Upload
-            </Link>
-          </div>
-        </nav>
-        <main className="container mx-auto p-6">
-          {children}
-        </main>
+        {children}
       </body>
     </html>
   )
