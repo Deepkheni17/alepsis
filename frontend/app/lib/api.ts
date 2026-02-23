@@ -1,12 +1,14 @@
 /**
  * API client for backend communication
- * Handles both server-side (SSR) and client-side requests
+ *
+ * All requests go through the Next.js /api rewrite proxy defined in next.config.js.
+ * This eliminates CORS issues — the browser sees same-origin requests and
+ * Next.js forwards them to the actual backend server.
+ *
+ * next.config.js rewrite: /api/:path* → http://127.0.0.1:8000/:path*
  */
 
-// Use direct backend URL for both server-side and client-side
-const getBaseUrl = () => {
-  return process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
-}
+const getBaseUrl = () => '/api'
 
 export interface LineItem {
   product_name: string | null

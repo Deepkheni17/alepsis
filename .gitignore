@@ -1,49 +1,80 @@
-# Python
+# ============================================================
+# PYTHON
+# ============================================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
 *.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+sdist/
+wheels/
+develop-eggs/
+parts/
+var/
+lib64/
+.installed.cfg
 
-# Virtual Environment
+# ============================================================
+# VIRTUAL ENVIRONMENT
+# ============================================================
+.venv/
 venv/
 env/
 ENV/
-.venv
 
-# IDE
+# ============================================================
+# ENVIRONMENT VARIABLES — NEVER COMMIT REAL SECRETS
+# ============================================================
+.env
+.env.local
+.env.*.local
+# (keep .env.example and .env.template — they have no real values)
+
+# ============================================================
+# LOGS & DEBUG
+# ============================================================
+*.log
+logs/
+error_log.txt
+*.pid
+
+# ============================================================
+# UPLOADED / TEMP FILES
+# ============================================================
+uploads/
+temp/
+
+# ============================================================
+# DATABASE
+# ============================================================
+*.db
+*.sqlite
+*.sqlite3
+*.db.backup*
+
+# ============================================================
+# IDE / EDITOR
+# ============================================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+
+# ============================================================
+# OS
+# ============================================================
 .DS_Store
+Thumbs.db
+desktop.ini
 
-# Environment Variables
-.env
-.env.local
-.env.*.local
-
-# Logs
-*.log
-logs/
-
-# Testing
+# ============================================================
+# TESTING / DEV-ONLY SCRIPTS
+# ============================================================
 .pytest_cache/
 .coverage
 htmlcov/
@@ -51,34 +82,39 @@ htmlcov/
 test_*.py
 test_*.jpg
 test_*.txt
-debug_*.py
-
-# FastAPI / Uvicorn
-*.pid
-
-# Uploaded files (if storing locally)
-uploads/
-temp/
-
-# Database (if added later)
-*.db
-*.sqlite
-*.sqlite3
-*.db.backup*
-
-# Debug / verify / example scripts (dev-only, not for production)
 verify_*.py
 example_*.py
-error_log.txt
+debug_*.py
 fix_db.py
 debug_api.py
-
-# Frontend debug pages
 frontend/app/auth-debug/
 
-# Cleanup script (dev utility)
-cleanup.bat
+# ============================================================
+# NEXT.JS / FRONTEND
+# ============================================================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.pnp
+frontend/.pnp.js
+frontend/coverage/
+frontend/.vercel
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
 
-# OS
-Thumbs.db
-.DS_Store
+# ============================================================
+# MISC BUILD ARTIFACTS
+# ============================================================
+.dist/
+*.pem
+
+# ============================================================
+# DEV UTILITY SCRIPTS (not needed in repo)
+# ============================================================
+cleanup.bat
+push.bat
+git-push.ps1
+find-tesseract.ps1
+setup-tesseract.ps1
+frontend/test-auth.js

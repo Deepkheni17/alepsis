@@ -2,10 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, ChevronRight, Menu, X, FileText, Zap, Shield, Users } from 'lucide-react';
+import {
+  ArrowRight, Menu, X, FileText, Zap, Shield, Users,
+  Upload, CheckCircle2, BarChart3, Clock, Star,
+  Twitter, Github, Mail, Linkedin, ArrowUpRight
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedGroup } from '@/components/ui/animated-group';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const transitionVariants = {
   item: {
@@ -224,7 +229,7 @@ export function HeroSection() {
         </section>
 
         {/* Features Section */}
-        <section className="bg-background pb-16 pt-24 md:pb-32">
+        <section id="features" className="bg-background pb-16 pt-24 md:pb-32">
           <div className="mx-auto max-w-7xl px-6">
             <AnimatedGroup preset="fade">
               <div className="text-center mb-16">
@@ -277,43 +282,264 @@ export function HeroSection() {
               ))}
             </div>
 
-            {/* Trusted by logos section */}
-            <div className="group relative m-auto max-w-5xl mt-24">
-              <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
-                <Link href="/" className="block text-sm duration-150 hover:opacity-75 text-muted-foreground">
-                  <span>Trusted by teams worldwide</span>
-                  <ChevronRight className="ml-1 inline-block size-3" />
-                </Link>
+          </div>
+        </section>
+
+        {/* ─── How It Works ─────────────────────────────────────── */}
+        <section id="how-it-works" className="py-24 bg-muted/30 dark:bg-zinc-900/40">
+          <div className="mx-auto max-w-7xl px-6">
+            <AnimatedGroup preset="fade">
+              <div className="text-center mb-16">
+                <span className="inline-block text-xs font-semibold tracking-widest text-blue-600 uppercase mb-3">How it works</span>
+                <h2 className="text-3xl font-bold text-foreground md:text-4xl">Three steps to invoice automation</h2>
+                <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
+                  From raw PDF to approved record — completely hands-free.
+                </p>
               </div>
-              <div className="group-hover:blur-sm mx-auto mt-12 grid max-w-2xl grid-cols-4 gap-x-12 gap-y-8 transition-all duration-500 group-hover:opacity-50 sm:gap-x-16 sm:gap-y-14">
-                <div className="flex items-center justify-center">
-                  <img className="mx-auto h-5 w-fit dark:invert opacity-60" src="https://html.tailus.io/blocks/customers/nvidia.svg" alt="Nvidia Logo" height="20" width="auto" />
+            </AnimatedGroup>
+
+            <div className="relative">
+              {/* Connector line */}
+              <div className="hidden lg:block absolute top-10 left-[16.5%] right-[16.5%] h-px bg-gradient-to-r from-blue-500/30 via-indigo-500/40 to-blue-500/30" />
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                {[
+                  {
+                    step: '01',
+                    icon: Upload,
+                    title: 'Upload Invoice',
+                    description: 'Drag & drop or browse any PDF, JPG, or PNG invoice. Our system accepts all common formats.',
+                    color: 'from-blue-500 to-blue-600',
+                    bg: 'bg-blue-50 dark:bg-blue-950/30',
+                    iconColor: 'text-blue-600 dark:text-blue-400',
+                  },
+                  {
+                    step: '02',
+                    icon: Zap,
+                    title: 'AI Extracts Data',
+                    description: 'Google Gemma AI reads every field — vendor, invoice #, line items, taxes, and totals — in seconds.',
+                    color: 'from-indigo-500 to-indigo-600',
+                    bg: 'bg-indigo-50 dark:bg-indigo-950/30',
+                    iconColor: 'text-indigo-600 dark:text-indigo-400',
+                  },
+                  {
+                    step: '03',
+                    icon: CheckCircle2,
+                    title: 'Review & Approve',
+                    description: 'Validate, approve, or flag invoices for review. Export to CSV or Excel whenever you need.',
+                    color: 'from-violet-500 to-violet-600',
+                    bg: 'bg-violet-50 dark:bg-violet-950/30',
+                    iconColor: 'text-violet-600 dark:text-violet-400',
+                  },
+                ].map((step, i) => (
+                  <div key={i} className="flex flex-col items-center text-center">
+                    <div className="relative mb-6">
+                      <div className={`w-20 h-20 rounded-2xl ${step.bg} flex items-center justify-center shadow-sm ring-1 ring-border`}>
+                        <step.icon className={`w-9 h-9 ${step.iconColor}`} />
+                      </div>
+                      <span className={`absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br ${step.color} text-white text-[10px] font-bold flex items-center justify-center shadow`}>
+                        {step.step}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">{step.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Stats ────────────────────────────────────────────── */}
+        <section className="py-20 bg-background">
+          <div className="mx-auto max-w-7xl px-6">
+            <AnimatedGroup preset="fade">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                {[
+                  { value: '10×', label: 'Faster than manual entry', icon: Clock },
+                  { value: '99%', label: 'Extraction accuracy', icon: CheckCircle2 },
+                  { value: '∞', label: 'Invoices supported', icon: FileText },
+                  { value: ' < 5s', label: 'Average processing time', icon: BarChart3 },
+                ].map(({ value, label, icon: Icon }) => (
+                  <div key={label} className="text-center">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 mb-4 ring-1 ring-border">
+                      <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="text-4xl font-black text-foreground tracking-tight mb-1">{value}</div>
+                    <div className="text-sm text-muted-foreground">{label}</div>
+                  </div>
+                ))}
+              </div>
+            </AnimatedGroup>
+          </div>
+        </section>
+
+        {/* ─── Testimonials ─────────────────────────────────────── */}
+        <section className="py-24 bg-muted/30 dark:bg-zinc-900/40">
+          <div className="mx-auto max-w-7xl px-6">
+            <AnimatedGroup preset="fade">
+              <div className="text-center mb-16">
+                <span className="inline-block text-xs font-semibold tracking-widest text-blue-600 uppercase mb-3">Testimonials</span>
+                <h2 className="text-3xl font-bold text-foreground md:text-4xl">Loved by finance teams</h2>
+              </div>
+            </AnimatedGroup>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  quote: "Alepsis cut our invoice processing time from 2 days to 10 minutes. The AI accuracy is genuinely impressive.",
+                  name: "Priya Singh",
+                  role: "CFO, TechVentures Pvt. Ltd.",
+                  stars: 5,
+                },
+                {
+                  quote: "We process 300+ vendor invoices a month. Alepsis handles them all automatically — we just review and approve.",
+                  name: "Marcus Weber",
+                  role: "Finance Manager, NovaBuild GmbH",
+                  stars: 5,
+                },
+                {
+                  quote: "The validation system catches errors our team used to miss. It's like having an extra accountant on staff.",
+                  name: "Ayesha Patel",
+                  role: "Head of Accounts, GlobalTrade Co.",
+                  stars: 5,
+                },
+              ].map((t, i) => (
+                <div key={i} className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col">
+                  <div className="flex gap-0.5 mb-4">
+                    {Array.from({ length: t.stars }).map((_, j) => (
+                      <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed flex-1 italic">&ldquo;{t.quote}&rdquo;</p>
+                  <div className="mt-5 pt-5 border-t border-border">
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t.role}</p>
+                  </div>
                 </div>
-                <div className="flex items-center justify-center">
-                  <img className="mx-auto h-4 w-fit dark:invert opacity-60" src="https://html.tailus.io/blocks/customers/github.svg" alt="GitHub Logo" height="16" width="auto" />
-                </div>
-                <div className="flex items-center justify-center">
-                  <img className="mx-auto h-5 w-fit dark:invert opacity-60" src="https://html.tailus.io/blocks/customers/nike.svg" alt="Nike Logo" height="20" width="auto" />
-                </div>
-                <div className="flex items-center justify-center">
-                  <img className="mx-auto h-6 w-fit dark:invert opacity-60" src="https://html.tailus.io/blocks/customers/openai.svg" alt="OpenAI Logo" height="24" width="auto" />
-                </div>
-                <div className="flex items-center justify-center">
-                  <img className="mx-auto h-5 w-fit dark:invert opacity-60" src="https://html.tailus.io/blocks/customers/lemonsqueezy.svg" alt="Lemon Squeezy Logo" height="20" width="auto" />
-                </div>
-                <div className="flex items-center justify-center">
-                  <img className="mx-auto h-4 w-fit dark:invert opacity-60" src="https://html.tailus.io/blocks/customers/laravel.svg" alt="Laravel Logo" height="16" width="auto" />
-                </div>
-                <div className="flex items-center justify-center">
-                  <img className="mx-auto h-7 w-fit dark:invert opacity-60" src="https://html.tailus.io/blocks/customers/lilly.svg" alt="Lilly Logo" height="28" width="auto" />
-                </div>
-                <div className="flex items-center justify-center">
-                  <img className="mx-auto h-4 w-fit dark:invert opacity-60" src="https://html.tailus.io/blocks/customers/column.svg" alt="Column Logo" height="16" width="auto" />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── CTA Banner ───────────────────────────────────────── */}
+        <section className="py-20 bg-background">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 p-10 md:p-16 text-center shadow-2xl shadow-blue-900/30">
+              {/* Decorative orbs */}
+              <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-white/5 blur-3xl" />
+              <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full bg-indigo-400/20 blur-3xl" />
+              <div className="relative">
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                  Start automating your invoices today
+                </h2>
+                <p className="text-blue-100 max-w-xl mx-auto mb-8 text-base">
+                  Join hundreds of finance teams that have eliminated manual data entry. No credit card required.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center gap-2 px-7 py-3 bg-white text-blue-700 font-semibold rounded-xl hover:bg-blue-50 transition-colors text-sm shadow-sm"
+                  >
+                    Get started free <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center justify-center gap-2 px-7 py-3 bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors text-sm backdrop-blur-sm"
+                  >
+                    View Dashboard <ArrowUpRight className="w-4 h-4" />
+                  </Link>
                 </div>
               </div>
             </div>
           </div>
         </section>
+
+        {/* ─── Footer ───────────────────────────────────────────── */}
+        <footer className="bg-card border-t border-border">
+          <div className="mx-auto max-w-7xl px-6 py-14">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+              {/* Brand column */}
+              <div className="md:col-span-2">
+                <InvoiceLogo />
+                <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-sm">
+                  Alepsis is an AI-powered invoice processing platform that automates data extraction, validation, and approval workflows for modern finance teams.
+                </p>
+                <div className="flex items-center gap-3 mt-6">
+                  {[
+                    { icon: Twitter, href: '#', label: 'Twitter' },
+                    { icon: Github, href: '#', label: 'GitHub' },
+                    { icon: Linkedin, href: '#', label: 'LinkedIn' },
+                    { icon: Mail, href: 'mailto:hello@alepsis.io', label: 'Email' },
+                  ].map(({ icon: Icon, href, label }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      aria-label={label}
+                      className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted hover:border-blue-500/30 transition-all"
+                    >
+                      <Icon className="w-4 h-4" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              {/* Product links */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-4">Product</h3>
+                <ul className="space-y-3">
+                  {[
+                    { label: 'Features', href: '#features' },
+                    { label: 'How It Works', href: '#how-it-works' },
+                    { label: 'Dashboard', href: '/dashboard' },
+                    { label: 'Upload Invoice', href: '/upload' },
+                    { label: 'All Invoices', href: '/invoices' },
+                  ].map(({ label, href }) => (
+                    <li key={label}>
+                      <Link href={href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Company links */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-4">Company</h3>
+                <ul className="space-y-3">
+                  {[
+                    { label: 'About', href: '#' },
+                    { label: 'Privacy Policy', href: '#' },
+                    { label: 'Terms of Service', href: '#' },
+                    { label: 'Contact Us', href: 'mailto:hello@alepsis.io' },
+                    { label: 'Support', href: '#' },
+                  ].map(({ label, href }) => (
+                    <li key={label}>
+                      <a href={href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Bottom bar */}
+            <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-muted-foreground">
+                &copy; {new Date().getFullYear()} Alepsis. All rights reserved. Built with ❤️ using Next.js &amp; AI.
+              </p>
+              <div className="flex items-center gap-4">
+                <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
+                <span className="text-border text-xs">·</span>
+                <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</a>
+                <span className="text-border text-xs">·</span>
+                <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Cookies</a>
+              </div>
+            </div>
+          </div>
+        </footer>
+
       </main>
     </>
   );
@@ -321,8 +547,8 @@ export function HeroSection() {
 
 const menuItems = [
   { name: 'Features', href: '#features' },
+  { name: 'How It Works', href: '#how-it-works' },
   { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Invoices', href: '/invoices' },
   { name: 'Upload', href: '/upload' },
 ];
 
@@ -393,7 +619,8 @@ const HeroHeader = () => {
                   ))}
                 </ul>
               </div>
-              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit items-center">
+                <ThemeToggle />
                 <Button
                   asChild
                   variant="outline"

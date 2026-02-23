@@ -97,6 +97,15 @@
   * {
     border-color: var(--border);
     box-sizing: border-box;
+    /* Smooth theme switching */
+    transition-property: background-color, border-color, color, box-shadow;
+    transition-duration: 200ms;
+    transition-timing-function: ease;
+  }
+
+  /* Don't animate SVG paths or transforms — looks wrong */
+  svg *, *::before, *::after {
+    transition: none;
   }
 
   body {
@@ -144,4 +153,27 @@
   .badge-approved {
     @apply bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-400;
   }
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slide-in-from-bottom {
+  from { transform: translateY(var(--tw-enter-translate-y, 1rem)); }
+  to   { transform: translateY(0); }
+}
+
+@layer utilities {
+  .animate-in {
+    animation-duration: var(--tw-animation-duration, 300ms);
+    animation-fill-mode: both;
+  }
+  .fade-in        { animation-name: fade-in; }
+  .slide-in-from-bottom-4 {
+    --tw-enter-translate-y: 1rem;
+    animation-name: slide-in-from-bottom;
+  }
+  .duration-500   { --tw-animation-duration: 500ms; }
 }
