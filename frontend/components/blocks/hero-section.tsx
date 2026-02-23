@@ -11,8 +11,9 @@ import { Button } from '@/components/ui/button';
 import { AnimatedGroup } from '@/components/ui/animated-group';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import type { Variants } from 'framer-motion';
 
-const transitionVariants = {
+const transitionVariants: { container?: Variants; item: Variants } = {
   item: {
     hidden: {
       opacity: 0,
@@ -124,7 +125,7 @@ export function HeroSection() {
                         },
                       },
                     },
-                    ...transitionVariants,
+                    item: transitionVariants.item,
                   }}
                   className="mt-12 flex flex-col items-center justify-center gap-2 md:flex-row"
                 >
@@ -152,7 +153,7 @@ export function HeroSection() {
                     transition: { staggerChildren: 0.05, delayChildren: 0.75 },
                   },
                 },
-                ...transitionVariants,
+                item: transitionVariants.item,
               }}
             >
               <div className="relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '@/lib/supabase'
 import {
   FileText, Upload, Download, CheckCircle2,
   Clock, AlertTriangle, Trash2, Eye, ChevronRight, TrendingUp

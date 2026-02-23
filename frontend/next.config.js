@@ -1,10 +1,14 @@
 /** @type {import('next').NextConfig} */
+
+// In production (Vercel), set NEXT_PUBLIC_API_URL to your deployed backend URL.
+// e.g. https://your-backend.railway.app
+// In local dev, it defaults to http://127.0.0.1:8000
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
 
 const nextConfig = {
-  // Proxy all /api/* requests to the backend server.
-  // This eliminates CORS issues because the request goes
-  // Next.js server → backend (same-origin from browser's perspective).
+  // ─── API Proxy ────────────────────────────────────────────────────────────
+  // Proxies /api/* → backend, eliminating browser CORS issues.
+  // On Vercel, set NEXT_PUBLIC_API_URL in the Vercel dashboard (Environment Variables).
   async rewrites() {
     return [
       {
@@ -12,6 +16,32 @@ const nextConfig = {
         destination: `${BACKEND_URL}/:path*`,
       },
     ]
+  },
+
+  // ─── Build Safety ─────────────────────────────────────────────────────────
+  // Don't fail the Vercel build on TypeScript errors (shown as warnings instead).
+  // Remove this line once all type errors are resolved.
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+
+  // Don't fail the Vercel build on ESLint errors.
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+
+  // ─── Performance ──────────────────────────────────────────────────────────
+  // Enable React strict mode for better error detection in development.
+  reactStrictMode: true,
+
+  // Allow images from Supabase storage if you use next/image in future.
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+    ],
   },
 }
 

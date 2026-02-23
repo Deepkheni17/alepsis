@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { fetchInvoices, Invoice } from '../lib/api'
-import { supabase } from '../../lib/supabase'
+import { fetchInvoices, Invoice } from '@/app/lib/api'
+import { supabase } from '@/lib/supabase'
 import {
   FileText, Upload, CheckCircle2, Clock, AlertTriangle,
   Search, Eye, ChevronRight

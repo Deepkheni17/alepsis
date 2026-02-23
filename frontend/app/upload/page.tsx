@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { uploadInvoice, type UploadResponse } from '../lib/api'
-import { supabase } from '../../lib/supabase'
+import { uploadInvoice, type UploadResponse } from '@/app/lib/api'
+import { supabase } from '@/lib/supabase'
 import {
   Upload, CheckCircle2, AlertTriangle, AlertCircle,
   ArrowLeft, ArrowRight, FileUp, FileCheck
