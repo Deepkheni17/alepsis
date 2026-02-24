@@ -17,12 +17,12 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 
-# PROACTIVE FIX: Check if we're connecting to Supabase on port 6543
-# Railway and some other providers have trouble with IPv6 on port 6543.
-# Switch to port 6543 (Supabase Pooler) which usually supports IPv4.
-if "supabase.co" in DATABASE_URL and ":6543/" in DATABASE_URL:
-    print("Detected Supabase connection on port 6543. Upgrading to port 6543 for IPv4 compatibility.")
-    DATABASE_URL = DATABASE_URL.replace(":6543/", ":6543/")
+# PROACTIVE FIX: Check if we're connecting to Supabase on port 5432
+# Railway and some other providers have trouble with IPv6 on port 5432.
+# Switch to port 6543 (Supabase Pooler) which uses IPv4-compatible connection pooling.
+if "supabase.co" in DATABASE_URL and ":5432/" in DATABASE_URL:
+    print("Detected Supabase connection on port 5432. Upgrading to port 6543 for IPv4 compatibility.")
+    DATABASE_URL = DATABASE_URL.replace(":5432/", ":6543/")
 
 # Ensure sslmode=require if it's not already there for Supabase
 if "supabase.co" in DATABASE_URL and "sslmode=" not in DATABASE_URL:

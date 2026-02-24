@@ -1,5 +1,5 @@
 [phases.setup]
-aptPackages = ["tesseract-ocr", "libtesseract-dev", "poppler-utils"]
+nixPkgs = ["tesseract", "tesseract-lang", "poppler_utils"]
 
 [phases.build]
 dependsOn = ["setup"]
