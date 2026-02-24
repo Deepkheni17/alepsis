@@ -88,11 +88,20 @@ app = FastAPI(
 )
 
 # Configure CORS
-# IMPORTANT: When allow_credentials=True, you CANNOT use allow_origins=["*"]
-# The browser will reject the response. Must list explicit origins.
+# IMPORTANT: When allow_credentials=True you CANNOT use allow_origins=["*"]
+# Set FRONTEND_URL env var to your Vercel URL in Railway dashboard.
+_frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+_allowed_origins = [
+    _frontend_url,
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
+
 app.add_middleware(
     CORSMiddleware,
-   allow_origins=["https://your-vercel-app.vercel.app"]
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
