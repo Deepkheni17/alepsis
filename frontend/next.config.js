@@ -25,9 +25,9 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
 
-  // Don't fail the Vercel build on ESLint errors.
+  // Don't fail the build on ESLint errors (eslint not installed in Docker).
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
 
   // ─── Docker / Standalone Output ───────────────────────────────────────────
