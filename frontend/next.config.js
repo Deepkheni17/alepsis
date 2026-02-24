@@ -30,6 +30,10 @@ const nextConfig = {
     ignoreDuringBuilds: false,
   },
 
+  // ─── Docker / Standalone Output ───────────────────────────────────────────
+  // Produces a self-contained build in .next/standalone used by the Dockerfile.
+  output: 'standalone',
+
   // ─── Performance ──────────────────────────────────────────────────────────
   // Enable React strict mode for better error detection in development.
   reactStrictMode: true,
