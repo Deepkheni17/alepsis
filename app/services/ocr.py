@@ -40,9 +40,30 @@ try:
         TESSERACT_AVAILABLE = True
         logger.info("Tesseract-OCR is available and ready")
     except Exception as e:
-        logger.warning(f"Tesseract-OCR not found: {e}")
-        logger.warning("Image and scanned PDF processing will not be available")
-        logger.warning("To enable: Install Tesseract and add to PATH, or set TESSERACT_CMD environment variable")
+        # PROACTIVE FIX: Try common Linux paths if not in PATH
+        common_paths = [
+            "/usr/bin/tesseract",
+            "/usr/local/bin/tesseract",
+            "/usr/bin/tesseract-ocr",
+        ]
+        
+        found = False
+        for path in common_paths:
+            if os.path.exists(path):
+                pytesseract.pytesseract.tesseract_cmd = path
+                try:
+                    pytesseract.get_tesseract_version()
+                    TESSERACT_AVAILABLE = True
+                    logger.info(f"Tesseract found and configured at: {path}")
+                    found = True
+                    break
+                except:
+                    continue
+        
+        if not found:
+            logger.warning(f"Tesseract-OCR not found in PATH or common locations: {e}")
+            logger.warning("Image and scanned PDF processing will not be available")
+            logger.warning("To enable: Install Tesseract and add to PATH, or set TESSERACT_CMD environment variable")
         
 except ImportError as e:
     logger.error(f"OCR libraries not installed: {e}")
@@ -156,7 +177,23 @@ class OCRService:
     def _ocr_pdf(file_content: bytes) -> str:
         """Convert PDF pages to images and perform OCR."""
         try:
-            images = convert_from_bytes(file_content)
+            # PROACTIVE FIX: Check for Poppler (pdftoppm) path
+            poppler_path = None
+            common_poppler_paths = [
+                "/usr/bin",
+                "/usr/local/bin",
+                "/usr/bin/pdfinfo", # Check if it's in the folder
+            ]
+            
+            # If pdftoppm is not in PATH, try to find it
+            import shutil
+            if not shutil.which("pdftoppm"):
+                for path in ["/usr/bin", "/usr/local/bin"]:
+                    if os.path.exists(os.path.join(path, "pdftoppm")):
+                        poppler_path = path
+                        break
+            
+            images = convert_from_bytes(file_content, poppler_path=poppler_path)
             
             text_parts = []
             for i, image in enumerate(images, start=1):

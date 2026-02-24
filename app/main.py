@@ -20,7 +20,7 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(override=True)
 
 from app.api.routes import router
 from app.database import init_db

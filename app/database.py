@@ -9,13 +9,25 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from .env file
+load_dotenv(override=True)
 
 # Get database URL from environment (required for production)
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
+
+# PROACTIVE FIX: Check if we're connecting to Supabase on port 5432
+# Railway and some other providers have trouble with IPv6 on port 5432.
+# Switch to port 6543 (Supabase Pooler) which usually supports IPv4.
+if "supabase.co" in DATABASE_URL and ":5432/" in DATABASE_URL:
+    print("Detected Supabase connection on port 5432. Upgrading to port 6543 for IPv4 compatibility.")
+    DATABASE_URL = DATABASE_URL.replace(":5432/", ":6543/")
+
+# Ensure sslmode=require if it's not already there for Supabase
+if "supabase.co" in DATABASE_URL and "sslmode=" not in DATABASE_URL:
+    separator = "&" if "?" in DATABASE_URL else "?"
+    DATABASE_URL = f"{DATABASE_URL}{separator}sslmode=require"
 
 # Create SQLAlchemy engine with production settings
 engine = create_engine(
