@@ -528,7 +528,7 @@ export function HeroSection() {
             {/* Bottom bar */}
             <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-xs text-muted-foreground">
-                &copy; {new Date().getFullYear()} Alepsis. All rights reserved. Built with ❤️ using Next.js &amp; AI.
+                &copy; {new Date().getFullYear()} Alepsis. All rights reserved. Built by Alepsis Solutions.
               </p>
               <div className="flex items-center gap-4">
                 <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
