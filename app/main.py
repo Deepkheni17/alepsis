@@ -91,13 +91,7 @@ app = FastAPI(
 # IMPORTANT: When allow_credentials=True you CANNOT use allow_origins=["*"]
 # Set FRONTEND_URL env var to your Vercel URL in Railway dashboard.
 _frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
-_allowed_origins = [
-    _frontend_url,
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-]
+_allowed_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
