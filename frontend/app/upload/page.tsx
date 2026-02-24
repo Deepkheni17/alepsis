@@ -4,13 +4,19 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamicImport from 'next/dynamic'
 import { uploadInvoice, type UploadResponse } from '@/app/lib/api'
 import { supabase } from '@/lib/supabase'
 import {
   Upload, CheckCircle2, AlertTriangle, AlertCircle,
   ArrowLeft, ArrowRight, FileUp, FileCheck
 } from 'lucide-react'
-import { AppSidebar } from '@/components/blocks/app-sidebar'
+
+// Lazy-load sidebar
+const AppSidebar = dynamic(
+  () => import('@/components/blocks/app-sidebar').then(m => ({ default: m.AppSidebar })),
+  { loading: () => <div className="w-64 min-h-screen bg-background border-r" />, ssr: false }
+)
 
 export default function UploadPage() {
   const router = useRouter()

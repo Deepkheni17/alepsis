@@ -4,12 +4,18 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamicImport from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
 import {
   FileText, Upload, Download, CheckCircle2,
   Clock, AlertTriangle, Trash2, Eye, ChevronRight, TrendingUp
 } from 'lucide-react'
-import { AppSidebar } from '@/components/blocks/app-sidebar'
+
+// Lazy-load sidebar — only needed after auth check passes
+const AppSidebar = dynamicImport(
+  () => import('@/components/blocks/app-sidebar').then(m => ({ default: m.AppSidebar })),
+  { loading: () => <div className="w-64 min-h-screen bg-background border-r" />, ssr: false }
+)
 
 const API_BASE_URL = '/api'
 

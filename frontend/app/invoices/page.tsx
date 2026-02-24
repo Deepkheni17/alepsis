@@ -4,13 +4,19 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamicImport from 'next/dynamic'
 import { fetchInvoices, Invoice } from '@/app/lib/api'
 import { supabase } from '@/lib/supabase'
 import {
   FileText, Upload, CheckCircle2, Clock, AlertTriangle,
   Search, Eye, ChevronRight
 } from 'lucide-react'
-import { AppSidebar } from '@/components/blocks/app-sidebar'
+
+// Lazy-load sidebar
+const AppSidebar = dynamicImport(
+  () => import('@/components/blocks/app-sidebar').then(m => ({ default: m.AppSidebar })),
+  { loading: () => <div className="w-64 min-h-screen bg-background border-r" />, ssr: false }
+)
 
 
 const STATUS_CONFIG = {
