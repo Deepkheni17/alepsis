@@ -9,9 +9,24 @@ export async function middleware(req: NextRequest) {
     },
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // If env vars are not configured, allow public routes and block protected ones
+  if (!supabaseUrl || !supabaseKey) {
+    const protectedPaths = ['/dashboard', '/upload', '/invoices']
+    const isProtectedPath = protectedPaths.some(path => req.nextUrl.pathname.startsWith(path))
+    if (isProtectedPath) {
+      const redirectUrl = req.nextUrl.clone()
+      redirectUrl.pathname = '/login'
+      return NextResponse.redirect(redirectUrl)
+    }
+    return response
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         get(name: string) {
