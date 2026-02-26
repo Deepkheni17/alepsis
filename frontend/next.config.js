@@ -6,6 +6,18 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
 
 const nextConfig = {
+  // ─── Expose env vars to all runtimes (middleware / server / client) ────────
+  // This ensures SUPABASE_URL / SUPABASE_ANON_KEY are available in the Edge
+  // Runtime middleware even if the NEXT_PUBLIC_ prefixed versions weren't set.
+  env: {
+    SUPABASE_URL:
+      process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    SUPABASE_ANON_KEY:
+      process.env.SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      '',
+  },
+
   // ─── API Proxy ────────────────────────────────────────────────────────────
   // Proxies /api/* → backend, eliminating browser CORS issues.
   // On Vercel, set NEXT_PUBLIC_API_URL in the Vercel dashboard (Environment Variables).

@@ -94,6 +94,7 @@ app = FastAPI(
 _frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
 _allowed_origins = [
     _frontend_url,
+    "https://angelic-energy-production.up.railway.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
