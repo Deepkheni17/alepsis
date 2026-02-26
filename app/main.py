@@ -88,14 +88,23 @@ app = FastAPI(
 )
 
 # Configure CORS
-# IMPORTANT: When allow_credentials=True you CANNOT use allow_origins=["*"]
-# Set FRONTEND_URL env var to your Vercel URL in Railway dashboard.
+# IMPORTANT: When allow_credentials=True you CANNOT use allow_origins=["*"].
+# Build an explicit list from the FRONTEND_URL env var (Railway injects this),
+# plus common local dev origins.
 _frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
-_allowed_origins = ["*"]
+_allowed_origins = [
+    _frontend_url,
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+# Also accept any *.up.railway.app origin so Railway preview deploys work.
+# Starlette supports regex patterns via allow_origin_regex.
+_allow_origin_regex = r"https://.*\.up\.railway\.app"
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
+    allow_origin_regex=_allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

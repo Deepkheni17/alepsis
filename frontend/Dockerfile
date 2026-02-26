@@ -40,6 +40,20 @@ ENV NODE_ENV=production
 # HOSTNAME must be 0.0.0.0 so Next.js listens on all interfaces inside the container.
 ENV HOSTNAME=0.0.0.0
 
+# ── Runtime environment variables ──────────────────────────────────────────────
+# Middleware (Edge Runtime) can read process.env at runtime for NON-NEXT_PUBLIC
+# vars. Expose the Supabase credentials under non-prefixed names too so the
+# middleware fallback picks them up even when the build args were missing.
+# Railway will inject these from Service Variables at container start.
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+
 # Non-root user for security
 RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nextjs
