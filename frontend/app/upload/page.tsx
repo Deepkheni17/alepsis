@@ -1,10 +1,10 @@
 'use client'
-export const dynamic = 'force-dynamic'
+// export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import dynamicImport from 'next/dynamic'
+import dynamic from 'next/dynamic'
 import { uploadInvoice, type UploadResponse } from '@/app/lib/api'
 import { supabase } from '@/lib/supabase'
 import {
