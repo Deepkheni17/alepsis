@@ -19,16 +19,9 @@ const nextConfig = {
   },
 
   // ─── API Proxy ────────────────────────────────────────────────────────────
-  // Proxies /api/* → backend, eliminating browser CORS issues.
-  // On Vercel, set NEXT_PUBLIC_API_URL in the Vercel dashboard (Environment Variables).
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${BACKEND_URL}/:path*`,
-      },
-    ]
-  },
+  // API requests are handled by the catch-all route handler at
+  // app/api/[...path]/route.ts which proxies to the backend server-side.
+  // This works in all deployment modes (dev, standalone, Railway, Vercel).
 
   // ─── Build Safety ─────────────────────────────────────────────────────────
   // Don't fail the Vercel build on TypeScript errors (shown as warnings instead).

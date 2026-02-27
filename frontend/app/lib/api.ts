@@ -1,11 +1,10 @@
 /**
  * API client for backend communication
  *
- * All requests go through the Next.js /api rewrite proxy defined in next.config.js.
- * This eliminates CORS issues — the browser sees same-origin requests and
- * Next.js forwards them to the actual backend server.
- *
- * next.config.js rewrite: /api/:path* → http://127.0.0.1:8000/:path*
+ * All requests go through /api/* which is handled by the Next.js
+ * catch-all route handler (app/api/[...path]/route.ts).
+ * The route handler proxies to the backend server-side,
+ * so this works in ALL deployment modes with zero CORS issues.
  */
 
 const getBaseUrl = () => '/api'

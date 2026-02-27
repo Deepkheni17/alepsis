@@ -2,10 +2,12 @@
 
 import Link from 'next/link'
 
+const API_BASE_URL = '/api'
+
 export default function DashboardActions() {
   const handleExport = (format: 'csv' | 'xlsx') => {
     if (typeof window !== 'undefined') {
-      window.location.href = `/api/invoices/export?format=${format}`
+      window.location.href = `${API_BASE_URL}/invoices/export?format=${format}`
     }
   }
   
